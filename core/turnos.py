@@ -1,9 +1,9 @@
-from game.player import player
+from core.player import player
 class turnos:
 
 
     def __init__(self, player1: player, player2: player):
-        self.player1 = player1
+        self.__player1__ = player1
         self.player2 = player2
         self.current_player = player1
 

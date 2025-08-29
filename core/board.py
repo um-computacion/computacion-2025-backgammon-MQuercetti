@@ -1,5 +1,5 @@
-from game.player import player
-from game.dice import dice
+from core.player import player
+from core.dice import dice
 
 class board:
     def __init__(self, player1: player, player2: player):
