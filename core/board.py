@@ -1,5 +1,6 @@
 from core.player import player
 from core.dice import dice
+from core.checkers import checkers
 
 class board:
     def __init__(self, player1: player, player2: player):
