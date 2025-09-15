@@ -1,6 +1,8 @@
 import unittest
 from core.player import player
 from core.board import Board
+from core.dice import dice
+from core.checkers import Checkers
 
 class DummyPlayer:
     def __init__(self, name):
