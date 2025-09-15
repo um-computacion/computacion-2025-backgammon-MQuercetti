@@ -14,4 +14,11 @@ Se generaron tests unitarios para la clase Board siguiendo TDD. Los tests verifi
 ¿Podés realizar los tests para checkers?
 
 ## Respuesta
-Se generaron tests unitarios para la clase checkers siguiendo TDD. Los tests verifican la correcta asignación del propietario de la ficha y su representación, cumpliendo las pautas de desarrollo guiado por pruebas y
+Se generaron tests unitarios para la clase checkers siguiendo TDD. Los tests verifican la correcta asignación del propietario de la ficha y su representación, cumpliendo las pautas de desarrollo guiado por pruebas y SOLID.
+
+
+## Prompt
+¿Podrías crear los tests para players?
+
+## Respuesta
+Se generaron tests unitarios para la clase player siguiendo TDD. Los tests verifican la correcta asignación del nombre, la representación y la igualdad de jugadores, cumpliendo las pautas de desarrollo guiado por pruebas y SOLID.
