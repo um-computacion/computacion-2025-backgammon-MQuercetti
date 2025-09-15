@@ -2,4 +2,10 @@
 ¿Podés hacerlo con el prompt que te pasé?
 
 ## Respuesta
-Se generaron tests unitarios para la clase Dice siguiendo TDD. Los tests verifican que los valores de los dados estén en el rango correcto, que get_moves devuelva dos valores distintos para tiradas normales y cuatro valores iguales para dobles, cumpliendo las reglas de Backgammon y los principios de
+Se integró la lógica de los dados en la clase Board, usando el método get_moves de Dice para manejar correctamente los dobles y los movimientos permitidos según las reglas de Backgammon. Además, se agregó la verificación de movimientos válidos y la captura de fichas en el tablero, siguiendo TDD y SOLID.
+
+## Prompt
+¿Podés hacer los tests de board?
+
+## Respuesta
+Se generaron tests unitarios para la clase Board siguiendo TDD. Los tests verifican la inicialización de los puntos, el acceso válido e inválido, la lógica de movimiento y las restricciones de las reglas de Backgammon, cumpliendo las pautas de desarrollo guiado por pruebas
