@@ -1,6 +1,7 @@
 import unittest
 from core.dice import Dice
 
+
 class TestDice(unittest.TestCase):
     def test_dice_values_are_between_1_and_6(self):
         """
@@ -28,5 +29,6 @@ class TestDice(unittest.TestCase):
         dice.value2 = 6
         self.assertEqual(dice.get_moves(), [6, 6, 6, 6])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

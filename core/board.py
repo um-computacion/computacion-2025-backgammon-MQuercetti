@@ -2,6 +2,7 @@ from core.player import player
 from core.dice import dice
 from core.checkers import checkers
 
+
 class Board:
     def __init__(self, player1: player, player2: player):
         self.player1 = player1
@@ -17,15 +18,15 @@ class Board:
         points = [None] * 24
         # Inicialización estándar de backgammon
         # Cada punto es una lista de fichas (checkers)
-        points[0]  = [checkers(self.player2)] * 2
+        points[0] = [checkers(self.player2)] * 2
         points[11] = [checkers(self.player2)] * 5
         points[16] = [checkers(self.player2)] * 3
         points[18] = [checkers(self.player2)] * 5
 
         points[23] = [checkers(self.player1)] * 2
         points[12] = [checkers(self.player1)] * 5
-        points[7]  = [checkers(self.player1)] * 3
-        points[5]  = [checkers(self.player1)] * 5
+        points[7] = [checkers(self.player1)] * 3
+        points[5] = [checkers(self.player1)] * 5
         # Los demás puntos están vacíos
         for i in range(24):
             if points[i] is None:
