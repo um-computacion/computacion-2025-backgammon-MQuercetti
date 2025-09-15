@@ -1,6 +1,6 @@
-from player import player
-from dice import dice
-from checkers import checkers
+from core.player import player
+from core.dice import dice
+from core.checkers import Checkers as checkers
 
 
 class Board:
@@ -38,9 +38,23 @@ class Board:
             return self.points[index]
         raise IndexError("Invalid point index")
 
-    def move_checker(self, from_point: int, to_point: int):
-        # Lógica para mover una ficha de un punto a otro
+    def can_move(self, from_point: int, to_point: int, player):
         if not self.points[from_point]:
-            raise ValueError("No checker to move")
+            return False
+        checker = self.points[from_point][-1]
+        if checker.owner != player:
+            return False
+        destination = self.points[to_point]
+        if destination and destination[0].owner != player and len(destination) > 1:
+            return False
+        return True
+
+    def move_checker(self, from_point: int, to_point: int, player):
+        if not self.can_move(from_point, to_point, player):
+            raise ValueError("Movimiento inválido")
         checker = self.points[from_point].pop()
+        destination = self.points[to_point]
+        if destination and destination[0].owner != player and len(destination) == 1:
+            captured = destination.pop()
+            # Aquí podrías enviar la ficha capturada a la barra
         self.points[to_point].append(checker)

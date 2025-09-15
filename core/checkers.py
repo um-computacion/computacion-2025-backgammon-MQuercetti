@@ -1,4 +1,9 @@
 class Checkers:
+    def __init__(self, owner):
+        self.owner = owner
+
+    def __repr__(self):
+        return f"Checkers({self.owner})"
 
     def can_move(self, from_point, to_point, player):
         # Verifica si el movimiento es válido
