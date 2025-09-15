@@ -1,6 +1,6 @@
-from core.player import player
-from core.dice import dice
-from core.checkers import checkers
+from player import player
+from dice import dice
+from checkers import checkers
 
 
 class Board:

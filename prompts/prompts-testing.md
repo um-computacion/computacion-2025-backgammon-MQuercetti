@@ -9,3 +9,9 @@ Se integró la lógica de los dados en la clase Board, usando el método get_mov
 
 ## Respuesta
 Se generaron tests unitarios para la clase Board siguiendo TDD. Los tests verifican la inicialización de los puntos, el acceso válido e inválido, la lógica de movimiento y las restricciones de las reglas de Backgammon, cumpliendo las pautas de desarrollo guiado por pruebas
+
+## Prompt
+¿Podés realizar los tests para checkers?
+
+## Respuesta
+Se generaron tests unitarios para la clase checkers siguiendo TDD. Los tests verifican la correcta asignación del propietario de la ficha y su representación, cumpliendo las pautas de desarrollo guiado por pruebas y
