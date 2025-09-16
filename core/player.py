@@ -1,38 +1,70 @@
-class player:
-    """Representa un jugador en el juego.
+class Player:
+    """
+    A class used to represent a player in the game.
 
-    Attributes:
-        name (str): El nombre del jugador.
-        color (str): El color de las piezas del jugador.
+    Attributes
+    ----------
+    name : str
+        The name of the player.
+    color : str, optional
+        The color of the player's pieces (default is None).
+
+    Methods
+    -------
+    __repr__()
+        Returns a string representation of the player.
+    __eq__(other)
+        Compares two players based on their names.
     """
 
     def __init__(self, name):
         """
-        Inicializa un jugador con un nombre y sin color asignado.
-
-        Args:
-            name (str): El nombre del jugador.
+        Parameters
+        ----------
+        name : str
+            The name of the player.
         """
         self.name = name
         self.color = None
 
     def __repr__(self):
-        """Devuelve una representación legible del jugador.
+        """
+        Returns a string representation of the player.
 
-        Returns:
-            str: Representación en formato 'player(nombre)'.
+        Returns
+        -------
+        str
+            A string in the format 'player(name)'.
+
+        Examples
+        --------
+        >>> p = Player("Alice")
+        >>> repr(p)
+        'player(Alice)'
         """
         return f"player({self.name})"
 
     def __eq__(self, other):
-        """Compara dos jugadores por su nombre.
-
-        Args:
-            other (Player): Otro jugador a comparar.
-
-        Returns:
-            bool: True si ambos jugadores tienen el mismo nombre, False en caso contrario.
         """
-        if isinstance(other, player):
+        Compares two players based on their names.
+
+        Parameters
+        ----------
+        other : Player
+            The player to compare with.
+
+        Returns
+        -------
+        bool
+            True if both players have the same name, False otherwise.
+
+        Examples
+        --------
+        >>> p1 = Player("Alice")
+        >>> p2 = Player("Alice")
+        >>> p1 == p2
+        True
+        """
+        if isinstance(other, Player):
             return self.name == other.name
         return False
