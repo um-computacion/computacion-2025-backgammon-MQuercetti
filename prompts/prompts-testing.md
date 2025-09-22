@@ -22,3 +22,9 @@ Se generaron tests unitarios para la clase checkers siguiendo TDD. Los tests ver
 
 ## Respuesta
 Se generaron tests unitarios para la clase player siguiendo TDD. Los tests verifican la correcta asignación del nombre, la representación y la igualdad de jugadores, cumpliendo las pautas de desarrollo guiado por pruebas y SOLID.
+
+## Prompt
+¿Puedes decirme qué es este error y arreglarlo?
+
+## Respuesta
+El error ocurre porque la clase en core/player.py se llama Player (mayúscula), pero se intenta importar como player (minúscula). Cambia todas las importaciones y usos a from core.player import Player y usa Player(...) para instanciar.

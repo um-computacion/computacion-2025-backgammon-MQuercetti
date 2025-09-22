@@ -1,18 +1,21 @@
 import unittest
-from core.player import player
+from core.player import Player 
 from core.board import Board
 from core.dice import dice
 from core.checkers import Checkers
 
+
 class DummyPlayer:
     def __init__(self, name):
         self.name = name
+
 
 class TestBoard(unittest.TestCase):
     def setUp(self):
         self.player1 = DummyPlayer("Player1")
         self.player2 = DummyPlayer("Player2")
         self.board = Board(self.player1, self.player2)
+        self.player = Player("Player1")
 
     def test_initial_points_setup(self):
         # TDD: Verifica la cantidad inicial de fichas en los puntos clave
@@ -37,7 +40,9 @@ class TestBoard(unittest.TestCase):
 
     def test_can_move_false_wrong_owner(self):
         # TDD: No se puede mover ficha si no pertenece al jugador
-        self.assertFalse(self.board.can_move(0, 1, self.player1))  # En 0 están las del player2
+        self.assertFalse(
+            self.board.can_move(0, 1, self.player1)
+        )  # En 0 están las del player2
 
     def test_can_move_true(self):
         # TDD: Movimiento válido si hay ficha y destino libre
@@ -56,6 +61,7 @@ class TestBoard(unittest.TestCase):
         # TDD: Movimiento inválido lanza excepción
         with self.assertRaises(ValueError):
             self.board.move_checker(3, 4, self.player1)
+
 
 if __name__ == "__main__":
     unittest.main()
