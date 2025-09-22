@@ -1,4 +1,4 @@
-from core.player import player
+from core.player import Player
 from core.dice import dice
 from core.checkers import Checkers as checkers
 
@@ -36,7 +36,7 @@ class Board:
         Moves a checker from one point to another if the move is valid.
     """
 
-    def __init__(self, player1: player, player2: player):
+    def __init__(self, player1: Player, player2: Player):
         """
         Constructs all the necessary attributes for the board object.
 
