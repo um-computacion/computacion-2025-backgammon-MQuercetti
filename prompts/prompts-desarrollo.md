@@ -17,9 +17,3 @@ La lógica de movimiento en Backgammon depende del resultado de los dados y del 
 Para cumplir con SOLID, la lógica de movimiento debe estar en el tablero, no en la ficha. La ficha solo conoce a su dueño. El tablero verifica si el movimiento es válido y ejecuta el movimiento.
 
 A continuación se muestra una propuesta para la clase `Checkers` y la lógica de movimiento en el tablero:
-
-## Prompt
-¿Podés hacer el código de AI.py?
-
-## Respuesta
-Se implementó la clase AIPlayer para Backgammon siguiendo SOLID y TDD. La IA lanza los dados, genera movimientos válidos y ejecuta el mejor movimiento disponible. El diseño permite extender la lógica de decisión y facilita la integración con el tablero y los jugadores.
