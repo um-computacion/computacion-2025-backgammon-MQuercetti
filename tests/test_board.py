@@ -1,5 +1,5 @@
 import unittest
-from core.player import Player 
+from core.player import Player
 from core.board import Board
 from core.dice import dice
 from core.checkers import Checkers
