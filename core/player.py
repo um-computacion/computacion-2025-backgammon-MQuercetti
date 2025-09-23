@@ -1,3 +1,5 @@
+from typing import Any
+
 class Player:
     """
     A class used to represent a player in the game.
@@ -6,8 +8,8 @@ class Player:
     ----------
     name : str
         The name of the player.
-    color : str, optional
-        The color of the player's pieces (default is None).
+    color : str
+        The color of the player's pieces ('white' or 'black').
 
     Methods
     -------
@@ -17,15 +19,17 @@ class Player:
         Compares two players based on their names.
     """
 
-    def __init__(self, name):
+    def __init__(self, name: str, color: str):
         """
         Parameters
         ----------
         name : str
             The name of the player.
+        color : str
+            The color of the player's pieces ('white' or 'black').
         """
         self.name = name
-        self.color = None
+        self.color = color
 
     def __repr__(self):
         """
@@ -38,13 +42,13 @@ class Player:
 
         Examples
         --------
-        >>> p = Player("Alice")
+        >>> p = Player("Alice", "white")
         >>> repr(p)
         'player(Alice)'
         """
         return f"player({self.name})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """
         Compares two players based on their names.
 
@@ -60,8 +64,8 @@ class Player:
 
         Examples
         --------
-        >>> p1 = Player("Alice")
-        >>> p2 = Player("Alice")
+        >>> p1 = Player("Alice", "white")
+        >>> p2 = Player("Alice", "white")
         >>> p1 == p2
         True
         """
