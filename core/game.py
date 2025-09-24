@@ -1,7 +1,7 @@
 from core.board import Board
 from core.player import Player
 from ai import AIPlayer  # Tu AI
-from typing import Optional
+
 
 class Game:
     """

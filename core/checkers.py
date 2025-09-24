@@ -1,5 +1,4 @@
 from core.player import Player
-from typing import Any
 
 class Checkers:
     """
