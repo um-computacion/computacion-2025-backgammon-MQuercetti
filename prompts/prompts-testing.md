@@ -45,3 +45,19 @@ El error ocurre porque la clase en core/player.py se llama Player (mayúscula), 
 ## Respuesta
 
 Se generaron tests unitarios para la clase AIPlayer en ai.py usando mocks para simular el tablero y los dados. Los tests verifican que la IA ejecuta movimientos, selecciona secuencias, evalúa correctamente y puede copiar el tablero, siguiendo TDD y SOLID.
+
+## Prompt
+
+¿Podés hacer los tests por separados de cada uno?
+
+## Respuesta
+
+Se generaron archivos de test independientes para Player, Checkers, Dice, Board y AIPlayer, siguiendo TDD y SOLID. Cada archivo verifica la funcionalidad y los atributos principales de su clase correspondiente, facilitando el mantenimiento y la detección de errores.
+
+## Prompt
+
+podrías agregar los tests de game?
+
+## Respuesta
+
+Se agregaron tests unitarios para la clase Game. Los tests verifican la inicialización, el flujo de turnos para humano e IA, y el comportamiento cuando el juego termina, utilizando mocks para simular entradas y métodos. Esto asegura que la lógica principal del juego funcione correctamente y facilita el mantenimiento del proyecto.

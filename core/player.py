@@ -1,5 +1,6 @@
 from typing import Any
 
+
 class Player:
     """
     A class used to represent a player in the game.
@@ -46,7 +47,7 @@ class Player:
         >>> repr(p)
         'player(Alice)'
         """
-        return f"player({self.name})"
+        return f"Player({self.name}, {self.color})"
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -69,6 +70,7 @@ class Player:
         >>> p1 == p2
         True
         """
-        if isinstance(other, Player):
-            return self.name == other.name
-        return False
+        return isinstance(other, Player) and self.name == other.name
+
+    def __hash__(self):
+        return hash((self.name, self.color))

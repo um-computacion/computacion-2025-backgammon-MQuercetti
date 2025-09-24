@@ -51,3 +51,11 @@ Para mejorar, podrías implementar el método _copy_board y agregar una función
 ## Respuesta
 
 Se implementó el método _copy_board usando copy.deepcopy para simular movimientos sin afectar el tablero real. Además, se agregó la función _evaluate_sequence, que asigna un puntaje simple a cada secuencia de movimientos, permitiendo que la IA elija la opción más ventajosa según el avance de sus fichas. Esto mejora la toma de decisiones y mantiene el diseño alineado con SOLID y TDD.
+
+## Prompt
+
+podrías agregar los tests de game?
+
+## Respuesta
+
+Se agregaron tests unitarios para la clase Game. Los tests verifican la inicialización, el flujo de turnos para humano e IA, y el comportamiento cuando el juego termina, utilizando mocks para simular entradas y métodos. Esto asegura que la lógica principal del juego funcione correctamente y facilita el mantenimiento del proyecto.

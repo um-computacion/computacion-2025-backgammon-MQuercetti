@@ -4,8 +4,9 @@ from core.ai import AIPlayer
 
 
 class DummyPlayer:
-    def __init__(self, name):
+    def __init__(self, name, color="white"):
         self.name = name
+        self.color = color
 
 
 class DummyBoard:
@@ -15,7 +16,6 @@ class DummyBoard:
         self.is_valid_move = MagicMock(return_value=True)
 
     def __deepcopy__(self, memo):
-        # Devuelve una copia superficial para pruebas
         new_board = DummyBoard()
         new_board.points = [list(point) for point in self.points]
         new_board.move_piece = MagicMock()
@@ -24,13 +24,14 @@ class DummyBoard:
 
 
 class TestAIPlayer(unittest.TestCase):
-    @patch("core.ai.roll_dice", return_value=(3, 4))
+    @patch("core.board.roll_dice", return_value=(3, 4))
     def test_play_turn_executes_moves(self, mock_roll):
         ai = AIPlayer()
         board = DummyBoard()
         player = DummyPlayer("AI")
-        ai.play_turn(board, player)
-        # Debe intentar mover dos veces (por dos dados)
+        ai.board = board  # Asignar antes de llamar
+        ai.player = player
+        ai.play_turn()  # Sin argumentos
         self.assertTrue(board.move_piece.called)
 
     def test_choose_best_sequence_returns_sequence(self):
@@ -54,6 +55,18 @@ class TestAIPlayer(unittest.TestCase):
         board = DummyBoard()
         copy_board = ai._copy_board(board)
         self.assertIsInstance(copy_board, DummyBoard)
+
+    def test_play_turn_calls_ai_play_turn(self):
+        ai = AIPlayer()
+        board = DummyBoard()
+        player = DummyPlayer("AI")
+        ai.board = board
+        ai.player = player
+        # Solo verifica que no lanza excepción y acepta ambos argumentos
+        try:
+            ai.play_turn()  # Sin argumentos
+        except Exception as e:
+            self.fail(f"ai.play_turn() raised an exception: {e}")
 
 
 if __name__ == "__main__":

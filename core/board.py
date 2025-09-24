@@ -1,7 +1,9 @@
+from typing import Dict, List
 from core.player import Player
 from core.checkers import Checkers
 from core.dice import roll_dice
-from typing import List, Dict, Any, Optional
+from core.ai import AIPlayer
+
 
 class Board:
     """
@@ -64,6 +66,9 @@ class Board:
         self.points = self._create_points()
         self.bar: Dict[Player, List[Checkers]] = {player1: [], player2: []}
         self.off_board: Dict[Player, int] = {player1: 0, player2: 0}
+        self.ai = AIPlayer()
+        self.ai.board = self  # Asignar board a la IA
+        self.ai.player = player2  # Asignar player a la IA (puedes cambiar a player1 si es humano vs IA)
 
     def _create_points(self):
         """
@@ -135,56 +140,39 @@ class Board:
         """
         if die < 1 or die > 6:
             return False
-
-        direction = -1 if player.color == 'white' else 1
-        has_bar = len(self.bar[player]) > 0
-        to_point = None
-
-        if has_bar:
-            # Bar priority: Must move from bar first
-            bar_from = -1 if player.color == 'white' else 24
-            if from_point != bar_from:
-                return False
-            to_point = (0 if player.color == 'white' else 23) + direction * die
-            if not 0 <= to_point < 24:
-                return False
+        # Prioridad: si hay fichas en el bar, solo se puede mover desde el bar
+        if len(self.bar[player]) > 0 and from_point not in [-1, 24]:
+            return False
+        # Calcular el destino
+        direction = -1 if player.color == "white" else 1
+        if from_point == -1:  # Bar blanco
+            to_point = die - 1
+        elif from_point == 24:  # Bar negro
+            to_point = 24 - die
         else:
-            if not 0 <= from_point < 24 or not self.points[from_point]:
-                return False
-            checker = self.points[from_point][-1]
-            if checker.owner != player:
-                return False
             to_point = from_point + direction * die
-            if not 0 <= to_point < 24:
-                # Bear-off: All pieces in home area
-                home_start = 0 if player.color == 'white' else 18
-                home_end = 5 if player.color == 'white' else 23
-                pieces_in_home = sum(len(p) for i, p in enumerate(self.points) if home_start <= i <= home_end and p and p[0].owner == player)
-                total_remaining = pieces_in_home + len(self.bar[player])
-                if total_remaining == 15 - self.off_board[player] and home_start <= from_point <= home_end:
-                    return True
-                return False
+        # Verificar que el destino esté en el tablero
+        if not 0 <= to_point < 24:
+            return False
+        # Verificar que el destino no esté bloqueado (más de 1 ficha rival)
+        destination = self.points[to_point]
+        if destination and destination[0].owner != player and len(destination) > 1:
+            return False
+        return True
 
-        # Destination check
-        destination = self.get_point(to_point)
-        if destination and destination[0].owner != player and len(destination) >= 2:
-            return False  # Blocked
-        return True  # Valid: empty, own, or hit (len==1 opponent)
-
-    def move_piece(self, from_point: int, to_point: int, player: Player):
+    def move_piece(
+        self, from_point: int, die: int, player: Player
+    ):  # Cambié to_point por die para claridad
         """
         Moves a checker from one point to another on the board.
-
-        If the destination contains a single opposing checker, it is captured and sent to bar.
-        Handles bear-off and bar entry.
 
         Parameters
         ----------
         from_point : int
-            The index of the point to move from.
-        to_point : int
-            The index of the point to move to.
-        player : player
+            The index of the point to move from (-1 for white bar, 24 for black bar).
+        die : int
+            The die value (1-6).
+        player : Player
             The player making the move.
 
         Raises
@@ -192,19 +180,36 @@ class Board:
         ValueError
             If the move is not valid.
         """
-        # Note: This is adapted to use calculated to_point internally, but keeps original signature for compatibility
-        # For full die integration, use is_valid_move with die to calculate to_point
-        if not self.points[from_point]:
-            raise ValueError("Invalid move")
-        checker = self.points[from_point].pop()
-        destination = self.points[to_point]
-        if destination and destination[0].owner != player and len(destination) == 1:
-            captured = destination.pop()
-            opponent = self.player2 if player == self.player1 else self.player1
-            self.bar[opponent].append(captured)
-        self.points[to_point].append(checker)
-        # Bear-off check (if to_point off-board, but signature uses to_point; adjust calls accordingly)
-        if to_point < 0 or to_point >= 24:
+        # Obtener la ficha a mover
+        if from_point == -1:  # Bar blanco
+            if not self.bar[player]:
+                raise ValueError("No checkers on bar")
+            checker = self.bar[player].pop()
+            to_point = die - 1  # Destino para blanco desde bar
+        elif from_point == 24:  # Bar negro
+            if not self.bar[player]:
+                raise ValueError("No checkers on bar")
+            checker = self.bar[player].pop()
+            to_point = 24 - die  # Destino para negro desde bar
+        elif 0 <= from_point < 24:  # Desde un punto normal
+            if not self.points[from_point]:
+                raise ValueError("Invalid move")
+            checker = self.points[from_point].pop()
+            direction = -1 if player.color == "white" else 1
+            to_point = from_point + direction * die
+        else:
+            raise ValueError("Invalid from_point")
+
+        # Manejar el movimiento
+        if 0 <= to_point < 24:
+            destination = self.points[to_point]
+            if destination and destination[0].owner != player and len(destination) == 1:
+                captured = destination.pop()
+                opponent = self.player2 if player == self.player1 else self.player1
+                self.bar[opponent].append(captured)
+            self.points[to_point].append(checker)
+        else:
+            # Bear-off
             self.off_board[player] += 1
             if self.off_board[player] == 15:
                 self.winner = player
@@ -237,7 +242,9 @@ class Board:
         -------
         None
         """
-        self.current_player = self.player2 if self.current_player == self.player1 else self.player1
+        self.current_player = (
+            self.player2 if self.current_player == self.player1 else self.player1
+        )
 
     def is_game_over(self):
         """
@@ -253,7 +260,11 @@ class Board:
         >>> board.is_game_over()
         False
         """
-        return self.winner is not None or self.off_board[self.player1] == 15 or self.off_board[self.player2] == 15
+        return (
+            self.winner is not None
+            or self.off_board[self.player1] == 15
+            or self.off_board[self.player2] == 15
+        )
 
     def get_winner(self):
         """
@@ -281,15 +292,18 @@ class Board:
         -------
         None
         """
+        print(f"Turno: {self.current_player.name}")
         print("Backgammon Board State:")
         for i in range(23, -1, -1):
             point = self.points[i]
             if point:
-                owner_char = 'W' if point[0].owner.color == 'white' else 'B'
+                owner_char = "W" if point[0].owner.color == "white" else "B"
                 print(f"Point {i}: {len(point)}{owner_char}")
             else:
                 print(f"Point {i}: empty")
-        print(f"Bar {self.player1.name}: {len(self.bar[self.player1])} | Off-board: {self.off_board[self.player1]}")
-        print(f"Bar {self.player2.name}: {len(self.bar[self.player2])} | Off-board: {self.off_board[self.player2]}")
-
-
+        print(
+            f"Bar {self.player1.name}: {len(self.bar[self.player1])} | Off-board: {self.off_board[self.player1]}"
+        )
+        print(
+            f"Bar {self.player2.name}: {len(self.bar[self.player2])} | Off-board: {self.off_board[self.player2]}"
+        )
