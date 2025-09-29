@@ -1,50 +1,50 @@
-import core.player
-import core.board
-import core.dice
-import core.checkers
+from typing import List
 
-def play():
-    print("The game will start now!")
-    print("... (game in progress) ...")
+from core.board import Board
+from core.player import Player
 
-while True:
-    print("\nWelcome to Backgammon!")
-    print("Please choose an option:")
-    print("1. Start a new game")
-    print("2. Exit")
 
-    choice = input("Enter your choice (1 or 2): ")
+def _candidate_from_points(board: Board, player: Player) -> List[int]:
+    """Return candidate from_points considering bar priority and ownership."""
+    # Bar priority: if player has checkers on bar, must enter from bar
+    if len(board.bar[player]) > 0:
+        return [-1] if player.color == "white" else [24]
+    # Otherwise, any point with at least one checker belonging to the player
+    points = []
+    for i in range(24):
+        stack = board.points[i]
+        if stack and stack[-1].owner == player:
+            points.append(i)
+    return points
 
-    if choice == "1":
-        play()
-    elif choice == "2":
-        print("Exiting the game. Goodbye!")
-        break
-    else:
-        print("Invalid choice. Please enter 1 or 2.")
 
-def numplayers():
-    if choice == "1":
-        print("How many players? 1 or 2:")
-        num_players = input("Enter 1 or 2: ")
-    
-    if num_players == "1":
-        print("You selected 1-player mode.")
-    elif num_players == "2":
-        print("You selected 2-player mode.")
-    else:
-        print("Invalid choice. Please enter 1 or 2.")
+def _valid_from_points_for_die(board: Board, player: Player, die: int) -> List[int]:
+    """Filter candidate points to those that produce a valid move for this die."""
+    return [fp for fp in _candidate_from_points(board, player) if board.is_valid_move(fp, die, player)]
 
-if numplayers == "1":
-    print("Enter the player's name: ")
-    player_name = input("Name: ")
-    print(f"Welcome, {player_name}!")
-elif numplayers == "2":
-    print("Enter Player 1's name: ")
-    player1_name = input("Name: ")
-    print(f"Welcome, {player1_name}!")
-    
-    print("Enter Player 2's name: ")
-    player2_name = input("Name: ")
-    print(f"Welcome, {player2_name}!")
+
+def _input_from_point(prompt: str, valid_choices: List[int], player: Player) -> int | None:
+    """Prompt the user to choose a from_point, allowing 'q' to quit or 'pass' to skip.
+
+    Accepts aliases:
+      - 'bar' → -1 for white, 24 for black
+    Returns None if user chooses to pass.
+    """
+    while True:
+        raw = input(prompt).strip().lower()
+        if raw in {"q", "quit", "exit"}:
+            raise KeyboardInterrupt
+        if raw in {"p", "pass"}:
+            return None
+        if raw == "bar":
+            choice = -1 if player.color == "white" else 24
+        else:
+            try:
+                choice = int(raw)
+            except ValueError:
+                print("Invalid input. Enter an integer index, 'bar', or 'pass'.")
+                continue
+        if choice in valid_choices:
+            return choice
+        print(f"Invalid point. Valid options: {sorted(valid_choices)} (or 'pass').")
 
