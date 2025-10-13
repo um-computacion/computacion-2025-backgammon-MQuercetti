@@ -3,6 +3,7 @@ from core.player import Player
 from core.checkers import Checkers
 from core.dice import roll_dice
 from core.ai import AIPlayer
+import random
 
 
 class Board:
@@ -48,7 +49,7 @@ class Board:
         Displays the current state of the board.
     """
 
-    def __init__(self, player1: Player, player2: Player):
+    def __init__(self, player1: Player, player2: Player, random_positions: bool = True):
         """
         Constructs all the necessary attributes for the board object.
 
@@ -58,41 +59,81 @@ class Board:
             The first player.
         player2 : player
             The second player.
+        random_positions : bool, optional
+            If True, randomize starting positions. If False, use standard positions. Default is True.
         """
         self.player1 = player1
         self.player2 = player2
         self.winner = None
-        self.current_player = player1
-        self.points = self._create_points()
+        self.current_player = random.choice([player1, player2]) if random_positions else player1  # Blanco primero en estándar
+        self.points = self._create_points(random_positions)
         self.bar: Dict[Player, List[Checkers]] = {player1: [], player2: []}
         self.off_board: Dict[Player, int] = {player1: 0, player2: 0}
         self.ai = AIPlayer()
-        self.ai.board = self  # Asignar board a la IA
-        self.ai.player = player2  # Asignar player a la IA (puedes cambiar a player1 si es humano vs IA)
+        self.ai.board = self
+        self.ai.player = player2
 
-    def _create_points(self):
+    def _create_points(self, random_positions: bool = True):
         """
-        Initializes the board points with the standard backgammon starting position.
-
-        Returns
-        -------
-        list
-            A list of 24 elements, each a list of checkers representing a board point.
+        Initializes the board points.
+        If random_positions is True, fully randomize. If False, use standard Backgammon positions.
         """
-        points = [[] for _ in range(24)]  # Use comprehension to avoid object cloning
-        points[0] = [Checkers(self.player2) for _ in range(2)]
-        points[11] = [Checkers(self.player2) for _ in range(5)]
-        points[16] = [Checkers(self.player2) for _ in range(3)]
-        points[18] = [Checkers(self.player2) for _ in range(5)]
-
-        points[23] = [Checkers(self.player1) for _ in range(2)]
-        points[12] = [Checkers(self.player1) for _ in range(5)]
-        points[7] = [Checkers(self.player1) for _ in range(3)]
-        points[5] = [Checkers(self.player1) for _ in range(5)]
-
-        for i in range(24):
-            if points[i] is None:
-                points[i] = []
+        points = [[] for _ in range(24)]
+        
+        if not random_positions:
+            # Posiciones estándar
+            points[23] = [Checkers(self.player1) for _ in range(2)]  # Blanco
+            points[12] = [Checkers(self.player1) for _ in range(5)]
+            points[7] = [Checkers(self.player1) for _ in range(3)]
+            points[5] = [Checkers(self.player1) for _ in range(5)]
+            
+            points[0] = [Checkers(self.player2) for _ in range(2)]  # Negro
+            points[11] = [Checkers(self.player2) for _ in range(5)]
+            points[16] = [Checkers(self.player2) for _ in range(3)]
+            points[18] = [Checkers(self.player2) for _ in range(5)]
+        else:
+            # Randomización completa (código anterior)
+            # Total fichas: 15 por color
+            total_white = 15
+            total_black = 15
+            
+            # Lista de todos los puntos disponibles
+            all_points = list(range(24))
+            random.shuffle(all_points)
+            
+            # Elegir random cuántos puntos para blanco (1-12) y negro (1-12), dejando algunos vacíos
+            num_white_points = random.randint(1, 12)
+            num_black_points = random.randint(1, 12)
+            
+            # Asignar puntos a blanco
+            white_points = all_points[:num_white_points]
+            for point in white_points:
+                if total_white > 0:
+                    count = min(random.randint(1, 5), total_white)  # Máximo 5 por punto
+                    points[point] = [Checkers(self.player1) for _ in range(count)]
+                    total_white -= count
+            
+            # Asignar puntos a negro
+            black_points = all_points[num_white_points:num_white_points + num_black_points]
+            for point in black_points:
+                if total_black > 0:
+                    count = min(random.randint(1, 5), total_black)
+                    points[point] = [Checkers(self.player2) for _ in range(count)]
+                    total_black -= count
+            
+            # Si quedan fichas, asignar a puntos restantes random
+            remaining_points = all_points[num_white_points + num_black_points:]
+            random.shuffle(remaining_points)
+            for point in remaining_points:
+                if total_white > 0 and random.choice([True, False]):
+                    count = min(random.randint(1, 5), total_white)
+                    points[point] = [Checkers(self.player1) for _ in range(count)]
+                    total_white -= count
+                elif total_black > 0:
+                    count = min(random.randint(1, 5), total_black)
+                    points[point] = [Checkers(self.player2) for _ in range(count)]
+                    total_black -= count
+        
         return points
 
     def get_point(self, index: int):
@@ -143,22 +184,41 @@ class Board:
         # Prioridad: si hay fichas en el bar, solo se puede mover desde el bar
         if len(self.bar[player]) > 0 and from_point not in [-1, 24]:
             return False
-        # Calcular el destino
+        # Chequear que hay ficha en from_point
+        if from_point == -1 or from_point == 24:
+            if len(self.bar[player]) == 0:
+                return False
+        elif 0 <= from_point < 24:
+            if len(self.points[from_point]) == 0 or self.points[from_point][0].owner != player:
+                return False
+        else:
+            return False  # from_point inválido
+        # Calcular destino
         direction = -1 if player.color == "white" else 1
-        if from_point == -1:  # Bar blanco
+        if from_point == -1:
             to_point = die - 1
-        elif from_point == 24:  # Bar negro
+        elif from_point == 24:
             to_point = 24 - die
         else:
             to_point = from_point + direction * die
-        # Verificar que el destino esté en el tablero
-        if not 0 <= to_point < 24:
-            return False
-        # Verificar que el destino no esté bloqueado (más de 1 ficha rival)
-        destination = self.points[to_point]
-        if destination and destination[0].owner != player and len(destination) > 1:
-            return False
-        return True
+        # Chequear que destino es válido o bear-off
+        if 0 <= to_point < 24:
+            # Movimiento normal: chequear bloqueo
+            destination = self.points[to_point]
+            if destination and destination[0].owner != player and len(destination) > 1:
+                return False
+            return True
+        else:
+            # Bear-off: chequear que está en home y dado exacto
+            if player.color == "white":
+                if from_point not in range(0, 6):
+                    return False
+                required_die = from_point + 1  # Punto 0 necesita 1, punto 5 necesita 6
+            else:
+                if from_point not in range(18, 24):
+                    return False
+                required_die = 24 - from_point  # Punto 23 necesita 1, punto 18 necesita 6
+            return die == required_die
 
     def move_piece(
         self, from_point: int, die: int, player: Player

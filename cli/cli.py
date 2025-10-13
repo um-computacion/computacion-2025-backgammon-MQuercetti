@@ -1,3 +1,4 @@
+import random
 from typing import List
 
 from core.board import Board
@@ -62,36 +63,96 @@ def _play_human_turn(board: Board, player: Player) -> None:
 
     for die in dice:
         valid_froms = _valid_from_points_for_die(board, player, die)
-        if not valid_froms:
+        # Chequear si puede retirar
+        can_bear_off = _can_bear_off(board, player, die)
+        if not valid_froms and not can_bear_off:
             print(f"- Sin movimientos válidos para dado {die}.")
             continue
+        
+        prompt = (
+            "Elige punto de origen para mover con dado "
+            f"{die} (valores válidos {sorted(valid_froms)}; 'bar'/'pass'"
+        )
+        if can_bear_off:
+            prompt += "; 'retirar' para bear-off)"
+        else:
+            prompt += "): "
+        
         try:
-            fp = _input_from_point(
-                prompt=(
-                    "Elige punto de origen para mover con dado "
-                    f"{die} (valores válidos {sorted(valid_froms)}; 'bar'/'pass'): "
-                ),
-                valid_choices=valid_froms,
-                player=player,
-            )
+            choice = input(prompt).strip().lower()
+            if choice == "pass":
+                print("Pasar movimiento.")
+                continue
+            elif choice == "retirar" and can_bear_off:
+                # Elegir ficha para retirar
+                home_points = range(0, 6) if player.color == "white" else range(18, 24)
+                bear_off_froms = [p for p in home_points if len(board.points[p]) > 0 and board.is_valid_move(p, die, player)]
+                if bear_off_froms:
+                    fp = int(input(f"Elige punto para retirar (opciones: {bear_off_froms}): "))
+                    if fp in bear_off_froms:
+                        board.move_piece(fp, die, player)
+                        print(f"Ficha retirada desde {fp} con {die}.")
+                        if board.off_board[player] == 15:
+                            print(f"¡{player.name} gana!")
+                            board.winner = player
+                            return
+                    else:
+                        print("Punto inválido.")
+                        continue
+                else:
+                    print("No hay fichas para retirar con este dado.")
+                    continue
+            else:
+                fp = _parse_from_point(choice, player)
+                if fp not in valid_froms:
+                    print("Punto inválido.")
+                    continue
         except KeyboardInterrupt:
             print("\nSaliendo...")
             raise
-        if fp is None:
-            print("Pasar movimiento.")
+        except ValueError:
+            print("Entrada inválida.")
             continue
+        
+        # Guardar off_board antes del movimiento
+        off_before = board.off_board[player]
         try:
             board.move_piece(fp, die, player)
-            print(f"Movido desde {fp} con {die}.")
+            from_display = "bar" if fp in [-1, 24] else fp
+            print(f"Movido desde {from_display} con {die}.")
+            # Chequear si se retiró una ficha
+            if board.off_board[player] > off_before:
+                print("¡Ficha retirada del tablero!")
+                if board.off_board[player] == 15:
+                    print(f"¡{player.name} gana!")
+                    board.winner = player
+                    return
         except ValueError as e:
             print(f"Movimiento inválido: {e}")
     board.display()
 
+def _can_bear_off(board: Board, player: Player, die: int) -> bool:
+    """Chequea si el player puede hacer bear-off con el dado."""
+    home_points = range(0, 6) if player.color == "white" else range(18, 24)
+    return any(len(board.points[p]) > 0 and board.is_valid_move(p, die, player) for p in home_points)
 
-def _play_ai_turn(board: Board) -> None:
-    print("\nTurno de la IA.")
-    # La IA actual realiza un movimiento simple sin considerar los dados.
-    board.ai.play_turn()
+def _parse_from_point(choice: str, player: Player) -> int:
+    """Parsea la entrada del usuario para from_point."""
+    if choice == "bar":
+        return -1 if player.color == "white" else 24
+    return int(choice)
+
+# No olvides importar 'Player' si no lo tienes ya en los encabezados
+from core.player import Player
+
+def _play_ai_turn(board: Board, player: Player) -> None:
+    print(f"\nTurno de {player.name} ({player.color}).")
+    dice = board.roll_dice()
+    
+    # La lógica ahora está dentro de la clase AIPlayer.
+    # Simplemente le pasamos los dados y ella se encarga del resto.
+    board.ai.play_turn(dice)
+    
     board.display()
 
 
@@ -127,7 +188,7 @@ def main() -> None:
                 if board.current_player == human:
                     _play_human_turn(board, human)
                 else:
-                    _play_ai_turn(board)
+                    _play_ai_turn(board, ai_player_entity)
                 if board.is_game_over():
                     break
                 board.switch_player()
