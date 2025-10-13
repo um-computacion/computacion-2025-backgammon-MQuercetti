@@ -5,6 +5,12 @@ from core.ai import AIPlayer
 import random
 
 
+# Función global para roll_dice (para tests y compatibilidad)
+def roll_dice():
+    """Roll two dice for the game."""
+    return [random.randint(1, 6), random.randint(1, 6)]
+
+
 class Board:
     """
     A class used to represent a Backgammon game board.
@@ -274,7 +280,7 @@ class Board:
 
     def roll_dice(self):
         """Roll two dice for the game."""
-        return [random.randint(1, 6), random.randint(1, 6)]
+        return roll_dice()  # Llama a la función global
 
     def switch_player(self):
         """
