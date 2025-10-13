@@ -1,7 +1,6 @@
 from typing import Dict, List
 from core.player import Player
 from core.checkers import Checkers
-from core.dice import roll_dice
 from core.ai import AIPlayer
 import random
 
@@ -9,7 +8,6 @@ import random
 class Board:
     """
     A class used to represent a Backgammon game board.
-
     ...
 
     Attributes
@@ -274,25 +272,9 @@ class Board:
             if self.off_board[player] == 15:
                 self.winner = player
 
-    # Note: For die-based moves, call move_piece with calculated to_point = from_point ± die
-    # The above is kept close to original; for full integration, use a wrapper if needed
-
     def roll_dice(self):
-        """
-        Rolls the dice for the current turn.
-
-        Returns
-        -------
-        list
-            The dice values, handling doubles as four moves.
-
-        Examples
-        --------
-        >>> board = Board(player1, player2)
-        >>> board.roll_dice()
-        [3, 5]
-        """
-        return roll_dice()
+        """Roll two dice for the game."""
+        return [random.randint(1, 6), random.randint(1, 6)]
 
     def switch_player(self):
         """
