@@ -8,7 +8,6 @@ import random
 class Board:
     """
     A class used to represent a Backgammon game board.
-
     ...
 
     Attributes
