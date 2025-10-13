@@ -1,34 +1,108 @@
+<!-- filepath: /home/ignacio-quercetti/Escritorio/Tp2 computacion/computacion-2025-backgammon-MQuercetti/README.md -->
 # 🎲 Backgammon en Python  
 
-Este proyecto implementa una versión simplificada del juego **Backgammon** en Python.  
-Backgammon es un juego de mesa clásico de estrategia para **2 jugadores**, donde cada jugador debe mover sus fichas alrededor del tablero y sacarlas antes que su oponente.  
+Este proyecto implementa una versión completa del juego **Backgammon** en Python, siguiendo reglas tradicionales. Incluye lógica central separada de la UI, interfaz de línea de comando (CLI), interfaz gráfica con Pygame, y soporte opcional para guardado en Redis. Diseñado con principios SOLID para modularidad y mantenibilidad.  
+
+**Autor**: Ignacio Quercetti  
+**Versión**: 1.0.0  
+**Fecha**: Octubre 2025  
 
 ---
 
-## 🕹️ Cómo jugar Backgammon  
+## 📋 Descripción  
 
-### 1. Inicio del juego  
+Backgammon es un juego de estrategia para dos jugadores. Cada uno tiene 15 fichas que deben moverse por un tablero de 24 puntos, usando dados para determinar movimientos. El objetivo es retirar todas las fichas antes que el rival.  
 
-- Cada jugador tiene **15 fichas**.  
-- El objetivo es **sacar todas tus fichas antes que tu oponente**.  
+Este proyecto cumple con:  
 
-### 2. Movimiento de fichas  
-
-- Se lanzan **2 dados**.  
-- Cada número indica cuántos espacios puede moverse una ficha.  
-- Puedes usar ambos dados en una sola ficha o dividir el movimiento entre dos fichas.  
-- Si sacas **dobles (ej: 4 y 4)**, tienes **4 movimientos** en lugar de 2.  
-
-### 3. Golpear fichas  
-
-- Si caes en una casilla con **una sola ficha enemiga**, la mandas al “bar” (fuera del tablero).  
-- Esa ficha debe volver a entrar al tablero antes de que el rival pueda seguir moviendo.  
-
-### 4. Salir del tablero (bear off)  
-
-- Cuando todas tus fichas están en tu última zona del tablero, puedes empezar a sacarlas.  
-- El primero en sacar sus **15 fichas gana**.  
+- Reglas estándar (movimientos, capturas, reingresos desde barra, bear-off).  
+- Separación core/UI.  
+- Cobertura de tests >90%.  
+- Interfaces CLI y Pygame.  
 
 ---
 
-Autor: Ignacio Quercetti
+## 📋 Requisitos del Sistema  
+
+- **Python**: 3.8 o superior.  
+- **Dependencias**: Ver `requirements.txt` (incluye `pygame` para UI gráfica, `redis` opcional para guardado).  
+- **Docker**: Recomendado para despliegue consistente (testing y juego).  
+- **Sistema Operativo**: Linux/Mac/Windows (para Pygame, configura display en Linux).  
+
+---
+
+## 🚀 Instalación y Ejecución  
+
+### Opción 1: Instalación Local (sin Docker)  
+
+1. **Clona el repositorio**:  
+
+   ```bash
+   git clone <url-del-repo-oficial>
+   cd computacion-2025-backgammon-MQuercetti
+   ```
+
+2. **Instala las dependencias**:  
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Ejecuta la interfaz deseada**:  
+
+   - CLI: `python -m cli`
+   - Pygame: `python -m pygame_ui`
+
+### Opción 2: Uso de Docker  
+
+1. **Construye la imagen**:  
+
+   ```bash
+   docker build -t backgammon .
+   ```
+
+2. **Ejecuta el contenedor**:  
+
+   ```bash
+   docker run -it --rm backgammon
+   ```
+
+---
+
+## 🧪 Tests  
+
+Para ejecutar los tests:  
+
+```bash
+pytest tests/
+```
+
+---
+
+## 📂 Estructura del Proyecto  
+
+El proyecto tiene la siguiente estructura:  
+
+computacion-2025-backgammon-MQuercetti/
+├── core/              # Lógica central (board.py, player.py, ai.py, etc.)
+├── cli/               # Interfaz de línea de comando (cli.py)
+├── pygame_ui/         # Interfaz gráfica (main.py, renderizado)
+├── assets/            # Imágenes y sonidos para Pygame
+├── tests/             # Tests unitarios (test_*.py)
+├── [requirements.txt](http://_vscodecontentref_/1)   # Dependencias
+├── Dockerfile         # Para Docker
+├── [README.md](http://_vscodecontentref_/2)          # Este archivo
+├── CHANGELOG.md       # Historial de cambios
+├── JUSTIFICACION.md   # Justificación del diseño
+└── prompts-*.md       # Prompts usados con IA
+```
+
+---
+
+## 📜 Notas Adicionales  
+
+- Para contribuir, sigue las guías en `CONTRIBUTING.md`.  
+- Reporta issues en el repositorio de GitHub.  
+- Consulta la documentación en línea para más detalles.  
+
+¡Disfruta del juego! 🎉
