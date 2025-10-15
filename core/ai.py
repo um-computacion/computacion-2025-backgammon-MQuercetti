@@ -9,82 +9,83 @@ if TYPE_CHECKING:
 
 class AIPlayer:
     """
-    Representa un jugador de IA. La lógica para decidir los movimientos está aquí.
+    A class used to represent an AI player in the Backgammon game.
+
+    Attributes
+    ----------
+    __board__ : Board
+        The game board.
+    __player__ : Player
+        The player this AI controls.
+
+    Methods
+    -------
+    _get_valid_moves(dice)
+        Returns a list of valid moves for the AI.
+    _evaluate_board()
+        Evaluates the current board state.
+    make_move(dice)
+        Makes a move based on the dice.
     """
 
-    def __init__(self, name: str = "Computer"):
-        self.name = name
-        self.board: "Board" = None  # Asignado por Board
-        self.player: "Player" = None  # Asignado por Board
+    def __init__(self):
+        """
+        Constructs all the necessary attributes for the AI player object.
+        """
+        self.__board__ = None
+        self.__player__ = None
 
-    def play_turn(self, dice: List[int]) -> None:
+    def _get_valid_moves(self, dice: List[int]):
         """
-        Ejecuta el turno de la IA usando los dados proporcionados.
+        Gets all valid moves for the AI player given the dice.
+
+        Parameters
+        ----------
+        dice : list of int
+            The dice values.
+
+        Returns
+        -------
+        list
+            A list of valid moves.
         """
-        if not self.board or not self.player:
-            raise ValueError("Board and player must be assigned to AIPlayer")
-        
-        # Lógica básica: intenta mover con cada dado
+        valid_moves = []
         for die in dice:
-            valid_moves = self._get_valid_moves(die)
-            if valid_moves:
-                # Elige el primer movimiento válido (puedes mejorar esto)
-                from_point, to_point = valid_moves[0]
-                self.board.move_piece(from_point, die, self.player)
-                break  # Solo un movimiento por dado por simplicidad
+            for point in range(24):
+                if self.__board__.is_valid_move(point, die, self.__player__):
+                    valid_moves.append((point, die))
+        return valid_moves
 
-    def _get_valid_moves(self, die: int) -> List[tuple]:
+    def _evaluate_board(self):
         """
-        Devuelve una lista de movimientos válidos (from_point, to_point) para el dado.
-        Incluye bear-off si es posible.
-        """
-        moves = []
-        # Home points: 0-5 for white, 18-23 for black
-        home_points = range(0, 6) if self.player.color == "white" else range(18, 24)
-        
-        for from_point in range(24):
-            if self.board.is_valid_move(from_point, die, self.player):
-                direction = -1 if self.player.color == "white" else 1
-                to_point = from_point + direction * die
-                if 0 <= to_point < 24:
-                    moves.append((from_point, to_point))
-                else:
-                    # Bear-off: to_point fuera del tablero
-                    moves.append((from_point, to_point))
-        
-        # También movimientos desde el bar
-        if len(self.board.bar[self.player]) > 0:
-            bar_point = -1 if self.player.color == "white" else 24
-            if self.board.is_valid_move(bar_point, die, self.player):
-                direction = -1 if self.player.color == "white" else 1
-                to_point = bar_point + direction * die
-                moves.append((bar_point, to_point))
-        
-        return moves
+        Evaluates the current board state for the AI.
 
-    def _choose_best_sequence(self, board: "Board", sequences: List[List[tuple]], player: "Player") -> List[tuple]:
+        Returns
+        -------
+        int
+            A score for the board state.
         """
-        Elige la mejor secuencia de movimientos basada en evaluación.
-        """
-        if not sequences:
-            return []
-        # Por simplicidad, elige la primera secuencia
-        return sequences[0]
-
-    def _evaluate_sequence(self, board: "Board", seq: List[tuple], player: "Player") -> int:
-        """
-        Evalúa una secuencia de movimientos y devuelve un puntaje.
-        """
-        # Puntaje: suma de los dados usados en la secuencia
         score = 0
-        for move in seq:
-            from_point, to_point = move
-            # Asumiendo que to_point es el dado usado (como en los tests)
-            score += to_point
+        for point in range(24):
+            checkers = self.__board__.get_point(point)
+            if checkers and checkers[0].owner == self.__player__:
+                score += len(checkers)
         return score
 
-    def _copy_board(self, board: "Board") -> "Board":
+    def make_move(self, dice: List[int]):
         """
-        Crea una copia profunda del tablero para simulación.
+        Makes a move for the AI player.
+
+        Parameters
+        ----------
+        dice : list of int
+            The dice values.
+
+        Returns
+        -------
+        None
         """
-        return copy.deepcopy(board)
+        valid_moves = self._get_valid_moves(dice)
+        if valid_moves:
+            move = valid_moves[0]  # Simple: take first valid move
+            self.__board__.move_piece(move[0], move[1], self.__player__)

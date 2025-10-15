@@ -1,92 +1,80 @@
 from core.board import Board
 from core.player import Player
-from ai import AIPlayer  # Tu AI
 
 
 class Game:
     """
-    A class used to represent the overall Backgammon game, orchestrating turns.
+    A class used to represent the overall Backgammon game, coordinating board and players.
 
     Attributes
     ----------
-    board : Board
+    __board__ : Board
         The game board.
-    human_player : Player
-        The human player.
-    ai_player : AIPlayer
-        The AI opponent.
+    __players__ : list of Player
+        The list of players.
+    __current_player_index__ : int
+        Index of the current player.
 
     Methods
     -------
-    play()
-        Runs the game loop until over.
-    get_human_move(board, die)
-        Gets a move from human input.
+    start_game()
+        Starts the game.
+    play_turn()
+        Plays a turn for the current player.
+    is_game_over()
+        Checks if the game is over.
     """
 
-    def __init__(self, human_name: str = "Human", ai_name: str = "AI"):
+    def __init__(self, player1: Player, player2: Player):
         """
+        Constructs all the necessary attributes for the game object.
+
         Parameters
         ----------
-        human_name : str, optional
-            Name for human (default "Human").
-        ai_name : str, optional
-            Name for AI (default "AI").
+        player1 : Player
+            The first player.
+        player2 : Player
+            The second player.
         """
-        self.human_player = Player(human_name, "white")
-        self.ai_player = AIPlayer(ai_name, "black")
-        self.board = Board(self.human_player, self.ai_player)
+        self.__board__ = Board(player1, player2)
+        self.__players__ = [player1, player2]
+        self.__current_player_index__ = 0
 
-    def play(self):
+    def start_game(self):
         """
-        Runs the main game loop: Alternates turns until game over.
+        Starts the game.
 
         Returns
         -------
         None
-
-        Examples
-        --------
-        >>> game = Game()
-        >>> game.play()
-        # Plays the game
         """
-        print("¡Bienvenido a Backgammon! Humano (white) vs AI (black).")
-        self.board.display()
+        print("Game started!")
 
-        while not self.board.is_game_over():
-            current = self.board.current_player
-            print(f"\n--- Turno de {current.name} ({current.color}) ---")
-            dice = self.board.roll_dice()
+    def play_turn(self):
+        """
+        Plays a turn for the current player.
 
-            if current == self.human_player:
-                # Turno humano simple (input consola)
-                sequence = []
-                for die in dice[:2]:  # Simplificado, usa primeros 2
-                    while True:
-                        try:
-                            from_point = int(input(f"Mueve desde punto con {die}: "))
-                            if self.board.is_valid_move(from_point, die, current):
-                                self.board.move_piece(from_point, die, current)
-                                sequence.append((from_point, die))
-                                print(f"Movido: {from_point} con {die}")
-                                break
-                            else:
-                                print("Movimiento inválido. Intenta de nuevo.")
-                        except ValueError:
-                            print("Entrada inválida.")
-            else:
-                # Turno AI
-                self.ai_player.play_turn(self.board)
+        Returns
+        -------
+        None
+        """
+        current_player = self.__players__[self.__current_player_index__]
+        dice = self.__board__.roll_dice()
+        # Lógica para mover (simplificada)
+        self.__board__.switch_player()
+        self.__current_player_index__ = (self.__current_player_index__ + 1) % 2
 
-            self.board.switch_player()
-            self.board.display()
+    def is_game_over(self):
+        """
+        Checks if the game is over.
 
-        winner = self.board.get_winner()
-        if winner:
-            print(f"¡{winner.name} ({winner.color}) gana!")
-        else:
-            print("Empate (raro en Backgammon).")
+        Returns
+        -------
+        bool
+            True if the game is over, False otherwise.
+        """
+        return self.__board__.is_game_over()
+
 
 # Para correr
 if __name__ == "__main__":
