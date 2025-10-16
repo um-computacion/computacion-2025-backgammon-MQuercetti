@@ -24,7 +24,7 @@ class AIPlayer:
         Returns a list of valid moves for the AI.
     _evaluate_board()
         Evaluates the current board state.
-    make_move(dice)
+    play_turn(dice)
         Makes a move based on the dice.
     """
 
@@ -68,13 +68,13 @@ class AIPlayer:
         score = 0
         for point in range(24):
             checkers = self.__board__.get_point(point)
-            if checkers and checkers[0].owner == self.__player__:
+            if checkers and checkers[0].get_owner() == self.__player__:  # Usa getter
                 score += len(checkers)
         return score
 
-    def make_move(self, dice: List[int]):
+    def play_turn(self, dice: List[int]):
         """
-        Makes a move for the AI player.
+        Plays a turn for the AI player.
 
         Parameters
         ----------
@@ -89,3 +89,77 @@ class AIPlayer:
         if valid_moves:
             move = valid_moves[0]  # Simple: take first valid move
             self.__board__.move_piece(move[0], move[1], self.__player__)
+
+    def _choose_best_sequence(self, board, sequences, player):
+        """
+        Chooses the best sequence based on evaluation.
+
+        Parameters
+        ----------
+        board : Board
+            The board.
+        sequences : list of lists
+            List of sequences.
+        player : Player
+            The player.
+
+        Returns
+        -------
+        list
+            The best sequence.
+        """
+        best_seq = None
+        best_score = -float('inf')
+        for seq in sequences:
+            score = self._evaluate_sequence(board, seq, player)
+            if score > best_score:
+                best_score = score
+                best_seq = seq
+        return best_seq
+
+    def _copy_board(self, board):
+        """
+        Creates a copy of the board.
+
+        Parameters
+        ----------
+        board : Board
+            The board to copy.
+
+        Returns
+        -------
+        Board
+            A copy of the board.
+        """
+        import copy
+        return copy.deepcopy(board)
+
+    def _evaluate_sequence(self, board, seq, player):
+        """
+        Evaluates a sequence of moves.
+
+        Parameters
+        ----------
+        board : Board
+            The board.
+        seq : list
+            The sequence.
+        player : Player
+            The player.
+
+        Returns
+        -------
+        int
+            A score (example: number of checkers in home).
+        """
+        copy_board = self._copy_board(board)
+        for move in seq:
+            copy_board.move_piece(move[0], move[1], player)  # Aplica la secuencia
+        score = 0
+        color = player.get_color()  # Usa getter
+        home_range = range(18, 24) if color == "white" else range(0, 6)
+        for point in home_range:
+            checkers = copy_board.get_point(point)
+            if checkers and checkers[0].get_owner() == player:  # Usa getter
+                score += len(checkers)
+        return score
