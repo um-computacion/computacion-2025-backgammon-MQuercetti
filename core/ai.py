@@ -50,6 +50,15 @@ class AIPlayer:
             A list of valid moves.
         """
         valid_moves = []
+        # Primero, chequear bar si hay fichas
+        if len(self.__board__.get_bar()[self.__player__]) > 0:
+            bar_point = (
+                -1 if self.__player__.get_color() == "white" else 24
+            )  # Usa getter
+            for die in dice:
+                if self.__board__.is_valid_move(bar_point, die, self.__player__):
+                    valid_moves.append((bar_point, die))
+        # Luego, movimientos normales
         for die in dice:
             for point in range(24):
                 if self.__board__.is_valid_move(point, die, self.__player__):
@@ -109,7 +118,7 @@ class AIPlayer:
             The best sequence.
         """
         best_seq = None
-        best_score = -float('inf')
+        best_score = -float("inf")
         for seq in sequences:
             score = self._evaluate_sequence(board, seq, player)
             if score > best_score:
@@ -132,6 +141,7 @@ class AIPlayer:
             A copy of the board.
         """
         import copy
+
         return copy.deepcopy(board)
 
     def _evaluate_sequence(self, board, seq, player):
