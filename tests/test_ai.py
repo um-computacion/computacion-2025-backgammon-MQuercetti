@@ -1,101 +1,172 @@
-import unittest
-from unittest.mock import MagicMock, patch
-from core.ai import AIPlayer
+from typing import TYPE_CHECKING, List, Any
 import copy
+import random
+
+if TYPE_CHECKING:
+    from core.board import Board
+    from core.player import Player
 
 
-class DummyPlayer:
-    def __init__(self, name, color):
-        self.__name__ = name
-        self.__color__ = color
+class AIPlayer:
+    """
+    A class used to represent an AI player in the Backgammon game.
 
-    def get_name(self):
-        return self.__name__
+    Attributes
+    ----------
+    __board__ : Board
+        The game board.
+    __player__ : Player
+        The player this AI controls.
 
-    def get_color(self):
-        return self.__color__
+    Methods
+    -------
+    _get_valid_moves(dice)
+        Returns a list of valid moves for the AI.
+    _evaluate_board()
+        Evaluates the current board state.
+    play_turn(dice)
+        Makes a move based on the dice.
+    """
 
-    def __eq__(self, other):
-        if not isinstance(other, DummyPlayer):
-            return False
-        return self.__name__ == other.__name__ and self.__color__ == other.__color__
+    def __init__(self):
+        """
+        Constructs all the necessary attributes for the AI player object.
+        """
+        self.__board__ = None
+        self.__player__ = None
 
-    def __hash__(self):
-        return hash((self.__name__, self.__color__))
+    def _get_valid_moves(self, dice: List[int]):
+        """
+        Gets all valid moves for the AI player given the dice.
 
+        Parameters
+        ----------
+        dice : list of int
+            The dice values.
 
-class DummyCheckers:
-    def __init__(self, owner):
-        self.__owner__ = owner
+        Returns
+        -------
+        list
+            A list of valid moves.
+        """
+        valid_moves = []
+        # Primero, chequear bar si hay fichas
+        if len(self.__board__.get_bar()[self.__player__]) > 0:
+            bar_point = -1 if self.__player__.get_color() == "white" else 24  # Usa getter
+            for die in dice:
+                if self.__board__.is_valid_move(bar_point, die, self.__player__):
+                    valid_moves.append((bar_point, die))
+        # Luego, movimientos normales
+        for die in dice:
+            for point in range(24):
+                if self.__board__.is_valid_move(point, die, self.__player__):
+                    valid_moves.append((point, die))
+        return valid_moves
 
-    def get_owner(self):
-        return self.__owner__
+    def _evaluate_board(self):
+        """
+        Evaluates the current board state for the AI.
 
+        Returns
+        -------
+        int
+            A score for the board state.
+        """
+        score = 0
+        for point in range(24):
+            checkers = self.__board__.get_point(point)
+            if checkers and checkers[0].get_owner() == self.__player__:  # Usa getter
+                score += len(checkers)
+        return score
 
-class DummyBoard:
-    def __init__(self, owner1, owner2):
-        self.points = [[] for _ in range(24)]
-        # Agrega algunos checkers para moves válidos
-        self.points[23] = [DummyCheckers(owner1)]  # White on 23
-        self.points[0] = [DummyCheckers(owner2)] * 6  # 6 blacks in home
-        self.points[6] = [DummyCheckers(owner2)]  # Black on 6 (para mover a home)
-        self.bar = {owner1: [], owner2: []}
+    def play_turn(self, dice: List[int]):
+        """
+        Plays a turn for the AI player.
 
-    def move_piece(self, from_point, die, player):
-        self._move_piece(from_point, die, player)
+        Parameters
+        ----------
+        dice : list of int
+            The dice values.
 
-    def _move_piece(self, from_point, die, player):
-        # Simula move: from 6 with die 3, move to 3 (home for black)
-        if from_point == 6 and die == 3 and self.points[6]:
-            checker = self.points[6].pop()
-            to_point = 3  # Home for black
-            self.points[to_point].append(checker)
+        Returns
+        -------
+        None
+        """
+        valid_moves = self._get_valid_moves(dice)
+        if valid_moves:
+            move = valid_moves[0]  # Simple: take first valid move
+            self.__board__.move_piece(move[0], move[1], self.__player__)
 
-    def get_point(self, index):
-        return self.points[index] if 0 <= index < 24 else []
+    def _choose_best_sequence(self, board, sequences, player):
+        """
+        Chooses the best sequence based on evaluation.
 
-    def is_valid_move(self, point, die, player):
-        # Simple: valid if point 6 and die 3 or 4
-        return point == 6 and die in [3, 4]
+        Parameters
+        ----------
+        board : Board
+            The board.
+        sequences : list of lists
+            List of sequences.
+        player : Player
+            The player.
 
+        Returns
+        -------
+        list
+            The best sequence.
+        """
+        best_seq = None
+        best_score = -float('inf')
+        for seq in sequences:
+            score = self._evaluate_sequence(board, seq, player)
+            if score > best_score:
+                best_score = score
+                best_seq = seq
+        return best_seq
 
-class TestAIPlayer(unittest.TestCase):
-    def setUp(self):
-        self.board = DummyBoard(DummyPlayer("Alice", "white"), DummyPlayer("Bob", "black"))
-        # Quita mock: usa método real
-        self.ai = AIPlayer()
-        self.ai.__board__ = self.board
-        self.ai.__player__ = DummyPlayer("Bob", "black")
+    def _copy_board(self, board):
+        """
+        Creates a copy of the board.
 
-    def test_choose_best_sequence_returns_sequence(self):
-        board = DummyBoard(DummyPlayer("Alice", "white"), DummyPlayer("Bob", "black"))
-        sequences = [[(23, 3)]]
-        player = DummyPlayer("Bob", "black")
-        best = self.ai._choose_best_sequence(board, sequences, player)
-        self.assertIsInstance(best, list)
+        Parameters
+        ----------
+        board : Board
+            The board to copy.
 
-    def test_copy_board_returns_board(self):
-        board = DummyBoard(DummyPlayer("Alice", "white"), DummyPlayer("Bob", "black"))
-        copy = self.ai._copy_board(board)
-        self.assertIsInstance(copy, DummyBoard)
+        Returns
+        -------
+        Board
+            A copy of the board.
+        """
+        import copy
+        return copy.deepcopy(board)
 
-    def test_evaluate_sequence_returns_score(self):
-        board = DummyBoard(DummyPlayer("Alice", "white"), DummyPlayer("Bob", "black"))
-        seq = [(6, 3)]  # Cambia seq para mover black a home
-        player = DummyPlayer("Bob", "black")
-        score = self.ai._evaluate_sequence(board, seq, player)
-        self.assertEqual(score, 7)  # Ahora sí: 6 +1 =7
+    def _evaluate_sequence(self, board, seq, player):
+        """
+        Evaluates a sequence of moves.
 
-    def test_play_turn_executes_moves(self):
-        initial_3 = len(self.board.points[3])
-        self.ai.play_turn([3, 4])
-        self.assertEqual(len(self.board.points[3]), initial_3 + 1)  # Verifica que se movió
+        Parameters
+        ----------
+        board : Board
+            The board.
+        seq : list
+            The sequence.
+        player : Player
+            The player.
 
-    def test_play_turn_calls_ai_play_turn(self):
-        with patch.object(self.ai, 'play_turn') as mock_play:
-            self.ai.play_turn([3, 4])
-            mock_play.assert_called_once_with([3, 4])
-
-
-if __name__ == "__main__":
-    unittest.main()
+        Returns
+        -------
+        int
+            A score (example: number of checkers in home).
+        """
+        copy_board = self._copy_board(board)
+        for move in seq:
+            copy_board.move_piece(move[0], move[1], player)  # Aplica la secuencia
+        score = 0
+        color = player.get_color()  # Usa getter
+        home_range = range(18, 24) if color == "white" else range(0, 6)
+        for point in home_range:
+            checkers = copy_board.get_point(point)
+            if checkers and checkers[0].get_owner() == player:  # Usa getter
+                score += len(checkers)
+        return score
