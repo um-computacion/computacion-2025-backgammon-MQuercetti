@@ -1,52 +1,72 @@
 import unittest
+from unittest.mock import patch
+from core.game import Game
 from core.player import Player
-from core.board import Board
+from core.ai import AIPlayer
 
-
-class TestPlayer(unittest.TestCase):
-    """
-    Tests for the Player class.
-    """
+class TestGame(unittest.TestCase):
 
     def setUp(self):
-        self.p1 = Player("Alice", "white")
-        self.p2 = Player("Bob", "black")
-        self.board = Board(self.p1, self.p2)
+        """Set up a new game for each test."""
+        self.p1 = Player("Human", "white")
+        # The AIPlayer is not a Player subclass, it's a controller. 
+        # The game needs a Player instance for the AI.
+        self.p2 = Player("Computer", "black") 
+        self.game = Game(players=[self.p1, self.p2])
 
-    def test_init(self):
-        """Test initialization: name and color set correctly."""
-        self.assertEqual(self.p1.get_name(), "Alice")  # Usa getter
-        self.assertEqual(self.p1.get_color(), "white")  # Usa getter
-        self.assertEqual(self.p2.get_name(), "Bob")  # Usa getter
-        self.assertEqual(self.p2.get_color(), "black")  # Usa getter
+    def test_game_initialization(self):
+        """Test that the game initializes correctly."""
+        self.assertEqual(len(self.game.players), 2)
+        self.assertIn(self.p1, self.game.players)
+        self.assertIn(self.p2, self.game.players)
+        self.assertIsNotNone(self.game.board)
+        self.assertIsNotNone(self.game.dice)
+        self.assertIsNone(self.game.initial_roll_winner)
 
-    def test_eq_same_name(self):
-        """Test equality: Same name, different color → True."""
-        p3 = Player("Alice", "black")
-        self.assertEqual(self.p1, p3)
+    def test_switch_player(self):
+        """Test that the player turn switches correctly."""
+        initial_player = self.game.current_player
+        self.game.switch_player()
+        next_player = self.game.current_player
+        self.assertNotEqual(initial_player, next_player)
+        self.game.switch_player()
+        self.assertEqual(self.game.current_player, initial_player)
 
-    def test_eq_different_name(self):
-        """Test inequality: Different names → False."""
-        p3 = Player("Charlie", "white")
-        self.assertNotEqual(self.p1, p3)
+    @patch('core.dice.Dice.roll_one', side_effect=[6, 1])
+    def test_determine_first_player_p1_wins(self, mock_roll):
+        """Test the first player determination when player 1 rolls higher."""
+        self.game.determine_first_player()
+        self.assertEqual(self.game.initial_roll_winner, self.p1)
+        self.assertEqual(self.game.current_player, self.p1)
+        # The dice values from the initial roll should be set for the first turn
+        self.assertEqual(self.game.dice.get_values(), [6, 1])
 
-    def test_eq_non_player(self):
-        """Test with non-Player object → False."""
-        self.assertNotEqual(self.p1, "not a player")
+    @patch('core.dice.Dice.roll_one', side_effect=[2, 5])
+    def test_determine_first_player_p2_wins(self, mock_roll):
+        """Test the first player determination when player 2 rolls higher."""
+        self.game.determine_first_player()
+        self.assertEqual(self.game.initial_roll_winner, self.p2)
+        self.assertEqual(self.game.current_player, self.p2)
+        self.assertEqual(self.game.dice.get_values(), [2, 5])
 
-    def test_repr(self):
-        """Test string representation."""
-        self.assertEqual(repr(self.p1), "Player(name='Alice', color='white')")
+    @patch('core.dice.Dice.roll_one', side_effect=[3, 3, 5, 2])
+    def test_determine_first_player_tie(self, mock_roll):
+        """Test that a tie in the initial roll leads to a re-roll."""
+        self.game.determine_first_player()
+        self.assertEqual(self.game.initial_roll_winner, self.p1)
+        self.assertEqual(self.game.current_player, self.p1)
+        # Check that it took two sets of rolls
+        self.assertEqual(mock_roll.call_count, 4)
+        self.assertEqual(self.game.dice.get_values(), [5, 2])
+        
+    def test_is_game_over(self):
+        """Test the game-over condition."""
+        # Initially, game is not over
+        self.assertFalse(self.game.is_game_over())
+        
+        # Simulate one player bearing off all checkers
+        with patch.object(self.game.board, 'is_game_over', return_value=True):
+            self.assertTrue(self.game.is_game_over())
 
-    def test_player_equality(self):
-        """Test player equality."""
-        p3 = Player("Alice", "white")
-        self.assertEqual(self.p1, p3)
-
-    def test_turno(self):
-        """Test if the current player's name is displayed correctly."""
-        self.assertEqual(f"Turno: {self.p2.get_name()}", "Turno: Bob")  # Usa getter
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

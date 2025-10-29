@@ -1,175 +1,89 @@
-from typing import TYPE_CHECKING, List, Any
+from typing import TYPE_CHECKING, List
+from core.player import Player
 import copy
-import random
 
 if TYPE_CHECKING:
     from core.board import Board
-    from core.player import Player
 
-
-class AIPlayer:
+class AIPlayer(Player):
     """
-    A class used to represent an AI player in the Backgammon game.
-
-    Attributes
-    ----------
-    __board__ : Board
-        The game board.
-    __player__ : Player
-        The player this AI controls.
-
-    Methods
-    -------
-    _get_valid_moves(dice)
-        Returns a list of valid moves for the AI.
-    _evaluate_board()
-        Evaluates the current board state.
-    play_turn(dice)
-        Makes a move based on the dice.
+    Represents an AI player that can choose its own moves.
     """
 
-    def __init__(self):
+    def choose_moves(self, board: 'Board', dice: List[int]) -> List[tuple]:
         """
-        Constructs all the necessary attributes for the AI player object.
+        Chooses a sequence of moves for the AI.
+        
+        This implementation finds the first valid sequence of moves by iterating
+        through dice and checker positions. It returns moves as (from_point, to_point)
+        tuples, as expected by the game engine.
         """
-        self.__board__ = None
-        self.__player__ = None
+        best_moves = []
+        temp_board = copy.deepcopy(board)
+        temp_dice = sorted(list(set(dice)), reverse=True) # Use unique dice, higher first
+        
+        if len(dice) > len(temp_dice): # Handle doubles
+            temp_dice = list(dice)
 
-    def _get_valid_moves(self, dice: List[int]):
-        """
-        Gets all valid moves for the AI player given the dice.
+        direction = 1 if self.get_color() == 'black' else -1
 
-        Parameters
-        ----------
-        dice : list of int
-            The dice values.
+        while temp_dice:
+            die_to_use = None
+            move_found = None
 
-        Returns
-        -------
-        list
-            A list of valid moves.
-        """
-        valid_moves = []
-        # Primero, chequear bar si hay fichas
-        if len(self.__board__.get_bar()[self.__player__]) > 0:
-            bar_point = (
-                -1 if self.__player__.get_color() == "white" else 24
-            )  # Usa getter
-            for die in dice:
-                if self.__board__.is_valid_move(bar_point, die, self.__player__):
-                    valid_moves.append((bar_point, die))
-        # Luego, movimientos normales
-        for die in dice:
-            for point in range(24):
-                if self.__board__.is_valid_move(point, die, self.__player__):
-                    valid_moves.append((point, die))
-        return valid_moves
+            # Priority 1: Find a valid move from the bar
+            if temp_board.get_bar().get(self):
+                for d in temp_dice:
+                    # The move logic in board.py handles the conversion from die to point
+                    if temp_board.is_valid_move('bar', d, self):
+                        to_point = (d - 1) if self.get_color() == 'black' else (24 - d)
+                        move_found = ('bar', to_point)
+                        die_to_use = d
+                        break
+            
+            # Priority 2: Find a normal or bear-off move
+            else:
+                # Iterate through dice from largest to smallest to prioritize larger moves
+                for d in sorted(temp_dice, reverse=True):
+                    # Iterate through points based on player color/direction
+                    point_range = range(24) if self.get_color() == 'black' else range(23, -1, -1)
+                    for i in point_range:
+                        # Check if a checker of the AI's color is on this point
+                        if temp_board.get_point(i) and temp_board.get_point(i)[0].get_owner() == self:
+                            if temp_board.is_valid_move(i, d, self):
+                                # Check for bear-off first if eligible
+                                if temp_board.can_player_bear_off(self):
+                                    # Exact bear-off
+                                    if (self.get_color() == 'white' and (i + 1) == d) or \
+                                       (self.get_color() == 'black' and (24 - i) == d):
+                                        move_found = (i, 'off')
+                                        die_to_use = d
+                                        break # Found a bear-off, stop searching points
+                                
+                                # If no bear-off, consider a normal move
+                                if not move_found:
+                                    to_point_calc = i + (d * direction)
+                                    if 0 <= to_point_calc < 24:
+                                         # Check if the destination point is valid
+                                        target_point_content = temp_board.get_point(to_point_calc)
+                                        if not target_point_content or len(target_point_content) <= 1 or target_point_content[0].get_owner() == self:
+                                            move_found = (i, to_point_calc)
+                                            die_to_use = d
+                                            break # Found a normal move, stop searching points
+                    if move_found:
+                        break  # Found a move, stop searching dice for this turn
 
-    def _evaluate_board(self):
-        """
-        Evaluates the current board state for the AI.
+            if move_found and die_to_use is not None:
+                best_moves.append(move_found)
+                if die_to_use in temp_dice:
+                    temp_dice.remove(die_to_use)
+                
+                # Simulate the move on the temp board for the next iteration
+                from_point_sim, _ = move_found
+                temp_board.move_piece(from_point_sim, die_to_use, self)
 
-        Returns
-        -------
-        int
-            A score for the board state.
-        """
-        score = 0
-        for point in range(24):
-            checkers = self.__board__.get_point(point)
-            if checkers and checkers[0].get_owner() == self.__player__:  # Usa getter
-                score += len(checkers)
-        return score
+            else:
+                # No more moves possible with the remaining dice
+                break
 
-    def play_turn(self, dice: List[int]):
-        """
-        Plays a turn for the AI player.
-
-        Parameters
-        ----------
-        dice : list of int
-            The dice values.
-
-        Returns
-        -------
-        None
-        """
-        valid_moves = self._get_valid_moves(dice)
-        if valid_moves:
-            move = valid_moves[0]  # Simple: take first valid move
-            self.__board__.move_piece(move[0], move[1], self.__player__)
-
-    def _choose_best_sequence(self, board, sequences, player):
-        """
-        Chooses the best sequence based on evaluation.
-
-        Parameters
-        ----------
-        board : Board
-            The board.
-        sequences : list of lists
-            List of sequences.
-        player : Player
-            The player.
-
-        Returns
-        -------
-        list
-            The best sequence.
-        """
-        best_seq = None
-        best_score = -float("inf")
-        for seq in sequences:
-            score = self._evaluate_sequence(board, seq, player)
-            if score > best_score:
-                best_score = score
-                best_seq = seq
-        return best_seq
-
-    def _copy_board(self, board):
-        """
-        Creates a copy of the board.
-
-        Parameters
-        ----------
-        board : Board
-            The board to copy.
-
-        Returns
-        -------
-        Board
-            A copy of the board.
-        """
-        import copy
-
-        return copy.deepcopy(board)
-
-    def _evaluate_sequence(self, board, seq, player):
-        """
-        Evaluates a sequence of moves.
-
-        Parameters
-        ----------
-        board : Board
-            The board.
-        seq : list
-            The sequence.
-        player : Player
-            The player.
-
-        Returns
-        -------
-        int
-            A score (example: number of checkers in home).
-        """
-        copy_board = self._copy_board(board)
-        for move in seq:
-            copy_board.move_piece(move[0], move[1], player)  # Aplica la secuencia
-        score = 0
-        color = player.get_color()  # Usa getter
-        home_range = range(18, 24) if color == "white" else range(0, 6)
-        for point in home_range:
-            checkers = copy_board.get_point(point)
-            if checkers and checkers[0].get_owner() == player:  # Usa getter
-                score += len(checkers)
-        return score
+        return best_moves

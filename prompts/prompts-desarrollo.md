@@ -59,3 +59,53 @@ podrías agregar los tests de game?
 ## Respuesta
 
 Se agregaron tests unitarios para la clase Game. Los tests verifican la inicialización, el flujo de turnos para humano e IA, y el comportamiento cuando el juego termina, utilizando mocks para simular entradas y métodos. Esto asegura que la lógica principal del juego funcione correctamente y facilita el mantenimiento del proyecto.
+
+# Guía de Desarrollo del Proyecto Backgammon
+
+Este documento proporciona una guía técnica para desarrolladores que trabajen en este proyecto. Seguir estas directrices es crucial para mantener la calidad y estabilidad del código.
+
+## 1. Arquitectura del Proyecto
+
+El proyecto está dividido en dos componentes principales:
+
+- **`core/` (Backend - Lógica del Juego):**
+  - Contiene toda la lógica pura del Backgammon, sin ninguna dependencia de la interfaz de usuario.
+  - **`Game`:** Es el orquestador principal. Gestiona los turnos, los dados y el estado general de la partida.
+  - **`Board`:** Representa el tablero. Gestiona la posición de las fichas y valida la legalidad de los movimientos según las reglas.
+  - **`Player` / `AIPlayer`:** Representan a los participantes. `AIPlayer` hereda de `Player` y contiene la lógica para la toma de decisiones autónoma.
+  - **`Dice`:** Gestiona el estado y las tiradas de los dados.
+
+- **`pygame_ui/` (Frontend - Interfaz Gráfica):**
+  - Es responsable de toda la representación visual y la interacción con el usuario.
+  - Utiliza `pygame` para renderizar el tablero, las fichas y los menús.
+  - **`BackgammonUI`:** Es la clase principal que gestiona la máquina de estados de la UI (menú, partida, fin de juego) y el bucle de eventos.
+  - **No debe contener lógica de reglas de juego.** Toda la validación de movimientos se delega al `core`. La UI solo pregunta al `core` si un movimiento es válido (`game.has_possible_moves`, `game.move`, etc.).
+
+## 2. Flujo de Trabajo y Principios de Diseño
+
+- **Separación de Responsabilidades:** Mantener siempre la lógica del juego (`core`) desacoplada de la interfaz (`pygame_ui`). La UI no debe saber *por qué* un movimiento es ilegal, solo que *lo es*.
+- **Estado Inmutable (en la medida de lo posible):** La lógica de la IA (`choose_moves`) debe operar sobre una **copia** del tablero (`copy.deepcopy(board)`) para evitar modificar el estado real del juego durante su deliberación.
+- **Máquina de Estados en la UI:** La interfaz se gestiona con una máquina de estados (`self.game_state`). Cualquier cambio en el flujo del juego (como pasar del menú a la partida) debe ser un cambio de estado explícito.
+
+## 3. Cómo Ejecutar el Juego
+
+Para iniciar la interfaz gráfica de Pygame, ejecuta el siguiente comando desde la raíz del repositorio:
+
+```bash
+python3 pygame_ui/main.py
+```
+
+## 4. Dependencias
+
+El proyecto requiere `pygame`. Asegúrate de tenerlo instalado:
+
+```bash
+pip install pygame
+```
+
+## 5. Importaciones Circulares
+
+El `core` tiene dependencias complejas. Para evitar `ImportError` por importaciones circulares, se utilizan dos técnicas estándar de Python:
+
+- `from __future__ import annotations` en la primera línea del archivo.
+- Escribir las anotaciones de tipo como cadenas de texto (ej. `player: 'Player'`) para posponer su evaluación.
