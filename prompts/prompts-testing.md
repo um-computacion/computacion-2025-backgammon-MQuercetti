@@ -61,3 +61,62 @@ podrías agregar los tests de game?
 ## Respuesta
 
 Se agregaron tests unitarios para la clase Game. Los tests verifican la inicialización, el flujo de turnos para humano e IA, y el comportamiento cuando el juego termina, utilizando mocks para simular entradas y métodos. Esto asegura que la lógica principal del juego funcione correctamente y facilita el mantenimiento del proyecto.
+
+# Guía de Pruebas y Documentación
+
+Este documento describe cómo validar los cambios en el proyecto y las mejores prácticas para la documentación.
+
+## 1. Pruebas Unitarias (Backend)
+
+El `core` del juego está cubierto por una suite de pruebas unitarias que se encuentra en el directorio `tests/`. Estas pruebas son **obligatorias** y deben pasar siempre antes de considerar que un cambio está completo.
+
+### Cómo Ejecutar las Pruebas
+
+Para ejecutar la suite completa de pruebas, utiliza `pytest` desde la raíz del repositorio:
+
+```bash
+pytest
+```
+
+Si estás trabajando en un módulo específico (ej. `core/board.py`), puedes ejecutar solo las pruebas relevantes para agilizar el proceso:
+
+```bash
+pytest tests/test_board.py
+```
+
+## 2. Verificación Visual (Frontend)
+
+Cualquier cambio que afecte a la interfaz de usuario en `pygame_ui/main.py` debe ser verificado visualmente. Dado que el entorno de ejecución es *headless* (sin pantalla), no podemos simplemente "jugar" para probar. El proceso correcto es:
+
+1.  **Modificar `main.py` temporalmente:** Añade código al final de la función `main()` para renderizar el estado que quieres verificar y guardar una captura de pantalla.
+
+    ```python
+    # Ejemplo: Verificar el menú principal
+    def main():
+        # ... inicialización ...
+        ui = BackgammonUI(screen)
+
+        # --- Visual Verification ---
+        ui.draw_main_menu()
+        pygame.display.flip()
+        pygame.image.save(screen, "verification_screenshot.png")
+        # --- End Visual Verification ---
+
+        # ui.run() # Comenta la ejecución normal
+    ```
+
+2.  **Ejecutar el script:**
+
+    ```bash
+    python3 pygame_ui/main.py
+    ```
+
+3.  **Inspeccionar la imagen:** Revisa la imagen `verification_screenshot.png` para confirmar que los cambios visuales son correctos.
+
+4.  **Limpiar:** **Es crucial** que elimines el código de verificación visual de `main.py` y borres el archivo de imagen antes de enviar tus cambios. No deben quedar artefactos de prueba en el repositorio.
+
+## 3. Documentación
+
+- **Changelog:** Cualquier cambio significativo (nuevas funcionalidades, corrección de errores importantes) debe ser añadido a `changelog.md`.
+- **Código Autodocumentado:** Utiliza nombres de variables y funciones claros. Añade comentarios solo cuando la lógica sea compleja y no sea evidente por sí misma.
+- **Docstrings:** Todas las clases y métodos públicos deben tener *docstrings* que expliquen su propósito, parámetros y lo que retornan.

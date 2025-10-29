@@ -1,383 +1,180 @@
-from typing import Dict, List
-from core.player import Player
+from __future__ import annotations
+from typing import Dict, List, TYPE_CHECKING
 from core.checkers import Checkers
-from core.ai import AIPlayer
 import random
 
-
-# Función global para roll_dice (para tests y compatibilidad)
-def roll_dice():
-    """Roll two dice for the game."""
-    return [random.randint(1, 6), random.randint(1, 6)]
+if TYPE_CHECKING:
+    from core.player import Player
+    from core.ai import AIPlayer
 
 
 class Board:
     """
-    A class used to represent a Backgammon game board.
-    ...
-
-    Attributes
-    ----------
-    __player1__ : player
-        The first player of the game.
-    __player2__ : player
-        The second player of the game.
-    __winner__ : player or None
-        The player who has won the game, or None if the game is ongoing.
-    __current_player__ : player
-        The player whose turn it is.
-    __points__ : list of list of checkers
-        A list of 24 points representing positions on the board, each containing a stack of checkers.
-    __bar__ : dict
-        Bar for each player: {player: list of checkers in bar}.
-    __off_board__ : dict
-        Number of checkers borne off for each player: {player: int}.
-
-    Methods
-    -------
-    get_point(index)
-        Returns the list of checkers at a specific board point.
-    is_valid_move(from_point, die, player)
-        Determines if a move is valid for the given player from one point with a die value.
-    move_piece(from_point, die, player)
-        Moves a checker from one point with a die if the move is valid.
-    roll_dice()
-        Rolls the dice and returns the values.
-    switch_player()
-        Switches the current player.
-    is_game_over()
-        Checks if the game is over.
-    get_winner()
-        Returns the winner if the game is over.
-    display()
-        Displays the current state of the board.
+    Manages the Backgammon board state and move validation.
     """
 
-    def __init__(self, player1: Player, player2: Player, random_positions: bool = True):
-        """
-        Constructs all the necessary attributes for the board object.
-
-        Parameters
-        ----------
-        player1 : player
-            The first player.
-        player2 : player
-            The second player.
-        random_positions : bool, optional
-            If True, randomize starting positions. If False, use standard positions. Default is True.
-        """
-        self.__player1__ = player1
-        self.__player2__ = player2
+    def __init__(self, player1: 'Player', player2: 'Player', random_positions: bool = False):
+        self.__player1__ = player1 # White
+        self.__player2__ = player2 # Black
         self.__winner__ = None
-        self.__current_player__ = (
-            random.choice([player1, player2]) if random_positions else player1
-        )  # Blanco primero en estándar
         self.__points__ = self._create_points(random_positions)
-        self.__bar__: Dict[Player, List[Checkers]] = {player1: [], player2: []}
-        self.__off_board__: Dict[Player, int] = {player1: 0, player2: 0}
-        self.__ai__ = AIPlayer()
-        self.__ai__.__board__ = self
-        self.__ai__.__player__ = player2
+        self.__bar__: Dict['Player', List[Checkers]] = {player1: [], player2: []}
+        self.__off_board__: Dict['Player', int] = {player1: 0, player2: 0}
 
-    def _create_points(self, random_positions: bool = True):
-        """
-        Initializes the board points.
-        If random_positions is True, fully randomize. If False, use standard Backgammon positions.
-        """
+    def _create_points(self, random_positions: bool = False):
         points = [[] for _ in range(24)]
-
         if not random_positions:
-            # Posiciones estándar
-            points[23] = [Checkers(self.__player1__) for _ in range(2)]  # Blanco
+            # Player 1 (White) moves from 23 down to 0
+            points[23] = [Checkers(self.__player1__) for _ in range(2)]
             points[12] = [Checkers(self.__player1__) for _ in range(5)]
             points[7] = [Checkers(self.__player1__) for _ in range(3)]
             points[5] = [Checkers(self.__player1__) for _ in range(5)]
-
-            points[0] = [Checkers(self.__player2__) for _ in range(2)]  # Negro
+            
+            # Player 2 (Black) moves from 0 up to 23
+            points[0] = [Checkers(self.__player2__) for _ in range(2)]
             points[11] = [Checkers(self.__player2__) for _ in range(5)]
             points[16] = [Checkers(self.__player2__) for _ in range(3)]
             points[18] = [Checkers(self.__player2__) for _ in range(5)]
         else:
-            # Randomización completa
-            total_white = 15
-            total_black = 15
-            all_points = list(range(24))
-            random.shuffle(all_points)
-            num_white_points = random.randint(1, 12)
-            num_black_points = random.randint(1, 12)
-            white_points = all_points[:num_white_points]
-            for point in white_points:
-                if total_white > 0:
-                    count = min(random.randint(1, 5), total_white)
-                    points[point] = [Checkers(self.__player1__) for _ in range(count)]
-                    total_white -= count
-            black_points = all_points[num_white_points : num_white_points + num_black_points]
-            for point in black_points:
-                if total_black > 0:
-                    count = min(random.randint(1, 5), total_black)
-                    points[point] = [Checkers(self.__player2__) for _ in range(count)]
-                    total_black -= count
-            remaining_points = all_points[num_white_points + num_black_points :]
-            random.shuffle(remaining_points)
-            for point in remaining_points:
-                if total_white > 0 and random.choice([True, False]):
-                    count = min(random.randint(1, 5), total_white)
-                    points[point] = [Checkers(self.__player1__) for _ in range(count)]
-                    total_white -= count
-                elif total_black > 0:
-                    count = min(random.randint(1, 5), total_black)
-                    points[point] = [Checkers(self.__player2__) for _ in range(count)]
-                    total_black -= count
-
+            # Random setup
+            for player in [self.__player1__, self.__player2__]:
+                remaining_checkers = 15
+                while remaining_checkers > 0:
+                    point_index = random.randrange(24)
+                    if not points[point_index] or points[point_index][0].get_owner() == player:
+                        num_to_place = random.randint(1, remaining_checkers)
+                        for _ in range(num_to_place):
+                            points[point_index].append(Checkers(player))
+                        remaining_checkers -= num_to_place
         return points
 
     def get_point(self, index: int):
-        """
-        Returns the checkers at a given board point.
-
-        Parameters
-        ----------
-        index : int
-            Index of the point (0 to 23)
-
-        Returns
-        -------
-        list
-            The list of checkers at the specified point.
-
-        Raises
-        ------
-        IndexError
-            If the index is outside the valid range (0–23).
-        """
-        if 0 <= index < 24:
-            return self.__points__[index]
+        if 0 <= index < 24: return self.__points__[index]
         raise IndexError("Invalid point index")
 
-    def is_valid_move(self, from_point: int, die: int, player: Player):
-        """
-        Determines if a move is valid for the given player from one point with a die value.
+    def get_points(self): return self.__points__
+    def get_bar(self): return self.__bar__
+    def get_off_board_count(self, player: 'Player'): return self.__off_board__.get(player, 0)
+    def _set_off_board_count(self, player: 'Player', count: int): self.__off_board__[player] = count
+    def get_winner(self): return self.__winner__
 
-        Checks direction based on player color, bar priority, blocks (>=2 opponents), hits (1 opponent), and bear-off.
 
-        Parameters
-        ----------
-        from_point : int
-            The index of the point to move from (-1 for white bar, 24 for black bar).
-        die : int
-            The die value (1-6).
-        player : player
-            The player attempting the move.
+    def is_valid_move(self, from_point, die: int, player: 'Player'):
+        if die <= 0: return False
 
-        Returns
-        -------
-        bool
-            True if the move is valid, False otherwise.
-        """
-        if die < 1 or die > 6:
-            return False
-        if len(self.__bar__[player]) > 0 and from_point not in [-1, 24]:
-            return False
-        if from_point == -1 or from_point == 24:
-            if len(self.__bar__[player]) == 0:
-                return False
-        elif 0 <= from_point < 24:
-            if (
-                len(self.__points__[from_point]) == 0
-                or self.__points__[from_point][0].__owner__ != player
-            ):
-                return False
+        direction = -1 if player.get_color() == 'white' else 1
+        
+        if from_point == 'bar':
+            if not self.__bar__.get(player): return False
+            to_point = 24 + die * direction if player.get_color() == 'white' else -1 + die * direction
         else:
-            return False
-        direction = -1 if player.get_color() == "white" else 1  # Usa getter
-        if from_point == -1:
-            to_point = die - 1
-        elif from_point == 24:
-            to_point = 24 - die
-        else:
-            to_point = from_point + direction * die
-        if 0 <= to_point < 24:
-            destination = self.__points__[to_point]
-            if (
-                destination
-                and destination[0].__owner__ != player
-                and len(destination) > 1
-            ):
+            if self.__bar__.get(player): return False
+            if not self.__points__[from_point] or self.__points__[from_point][0].get_owner() != player:
                 return False
-            return True
+            to_point = from_point + (die * direction)
+        
+        is_bear_off = (direction == 1 and to_point > 23) or (direction == -1 and to_point < 0)
+        if is_bear_off:
+            return self.is_valid_bear_off_move(from_point, die, player)
+        
+        if not (0 <= to_point < 24): return False
+        
+        destination = self.__points__[to_point]
+        return not (destination and destination[0].get_owner() != player and len(destination) > 1)
+
+    def move_piece(self, from_point, die: int, player: Player):
+        if not self.is_valid_move(from_point, die, player):
+            raise ValueError("Invalid move")
+
+        direction = -1 if player.get_color() == 'white' else 1
+        
+        if from_point == 'bar':
+            checker = self.__bar__[player].pop(0)
+            to_point = 24 + die * direction if player.get_color() == 'white' else -1 + die * direction
         else:
-            if player.get_color() == "white":  # Usa getter
-                if from_point not in range(0, 6):
-                    return False
-                required_die = from_point + 1
-            else:
-                if from_point not in range(18, 24):
-                    return False
-                required_die = 24 - from_point
-            return die == required_die
-
-    def move_piece(self, from_point: int, die: int, player: Player):
-        """
-        Moves a checker from one point to another on the board.
-
-        Parameters
-        ----------
-        from_point : int
-            The index of the point to move from (-1 for white bar, 24 for black bar).
-        die : int
-            The die value (1-6).
-        player : Player
-            The player making the move.
-
-        Raises
-        ------
-        ValueError
-            If the move is not valid.
-        """
-        if from_point == -1:
-            if not self.__bar__[player]:
-                raise ValueError("No checkers on bar")
-            checker = self.__bar__[player].pop()
-            to_point = die - 1
-        elif from_point == 24:
-            if not self.__bar__[player]:
-                raise ValueError("No checkers on bar")
-            checker = self.__bar__[player].pop()
-            to_point = 24 - die
-        elif 0 <= from_point < 24:
-            if not self.__points__[from_point]:
-                raise ValueError("Invalid move")
             checker = self.__points__[from_point].pop()
-            direction = -1 if player.get_color() == "white" else 1  # Usa getter
-            to_point = from_point + direction * die
-        else:
-            raise ValueError("Invalid from_point")
+            to_point = from_point + (die * direction)
 
-        if 0 <= to_point < 24:
-            destination = self.__points__[to_point]
-            if destination and destination[0].__owner__ != player and len(destination) == 1:
-                captured = destination.pop()
-                opponent = (
-                    self.__player2__ if player == self.__player1__ else self.__player1__
-                )
-                self.__bar__[opponent].append(captured)
-            self.__points__[to_point].append(checker)
-        else:
+        is_bear_off = (direction == -1 and to_point < 0) or (direction == 1 and to_point > 23)
+        if is_bear_off:
             self.__off_board__[player] += 1
-            if self.__off_board__[player] == 15:
-                self.__winner__ = player
+            if self.__off_board__[player] == 15: self.__winner__ = player
+            return
+            
+        destination = self.__points__[to_point]
+        if destination and destination[0].get_owner() != player:
+            opponent_checker = destination.pop()
+            self.__bar__[opponent_checker.get_owner()].append(opponent_checker)
+        
+        self.__points__[to_point].append(checker)
 
-    def roll_dice(self):
-        """Roll two dice for the game."""
-        return roll_dice()
+    def can_player_bear_off(self, player: Player):
+        if self.__bar__.get(player):
+            return False
 
-    def switch_player(self):
-        """
-        Switches the current player between player1 and player2.
-
-        Returns
-        -------
-        None
-        """
-        self.__current_player__ = (
-            self.__player2__
-            if self.__current_player__ == self.__player1__
-            else self.__player1__
-        )
-
-    def is_game_over(self):
-        """
-        Checks if the game is over (one player has borne off all 15 checkers).
-
-        Returns
-        -------
-        bool
-            True if the game is over, False otherwise.
-        """
-        return (
-            self.__winner__ is not None
-            or self.__off_board__[self.__player1__] == 15
-            or self.__off_board__[self.__player2__] == 15
-        )
-
-    def get_winner(self):
-        """
-        Returns the player who has won the game, or None if the game is ongoing.
-
-        Returns
-        -------
-        player or None
-            The winner.
-
-        Raises
-        ------
-        ValueError
-            If the game is not over.
-        """
-        if not self.is_game_over():
-            raise ValueError("Game not over")
-        return self.__winner__
-
-    def display(self):
-        """
-        Displays the current state of the board in a simple format.
-
-        Returns
-        -------
-        None
-        """
-        print(f"Turno: {self.__current_player__.get_name()}")  # Usa getter
-        print("Backgammon Board State:")
-        for i in range(23, -1, -1):
+        color = player.get_color()
+        home_board_indices = range(6) if color == 'white' else range(18, 24)
+        
+        checkers_in_home = 0
+        for i in home_board_indices:
             point = self.__points__[i]
-            if point:
-                owner_char = "W" if point[0].get_owner().get_color() == "white" else "B"  # Usa getters
-                print(f"Point {i}: {len(point)}{owner_char}")
-            else:
-                print(f"Point {i}: empty")
-        print(
-            f"Bar {self.__player1__.get_name()}: {len(self.__bar__[self.__player1__])} | Off-board: {self.__off_board__[self.__player1__]}"  # Usa getter
-        )
-        print(
-            f"Bar {self.__player2__.get_name()}: {len(self.__bar__[self.__player2__])} | Off-board: {self.__off_board__[self.__player2__]}"  # Usa getter
-        )
+            if point and point[0].get_owner() == player:
+                checkers_in_home += len(point)
+        
+        total_checkers = self.get_off_board_count(player) + checkers_in_home
+        
+        return total_checkers == 15
 
-    def get_points(self):
-        """Getter for points."""
-        return self.__points__
+    def is_valid_bear_off_move(self, from_point, die, player):
+        if not self.can_player_bear_off(player):
+            return False
 
-    def get_bar(self):
-        """Getter for bar."""
-        return self.__bar__
+        color = player.get_color()
+        if color == 'white':  # Home is 0-5
+            if from_point > 5: return False
+            # Exact roll only
+            return (from_point + 1) == die
+        else:  # Black, home is 18-23
+            if from_point < 18: return False
+            # Exact roll only
+            return (24 - from_point) == die
 
-    def get_current_player(self):
-        """Getter for current_player."""
-        return self.__current_player__
-
-    def get_player1(self):
-        """Getter for player1."""
-        return self.__player1__
-
-    def get_player2(self):
-        """Getter for player2."""
-        return self.__player2__
-
-    # Setters para encapsulación estricta
-    def set_point(self, index: int, checkers: List[Checkers]):
-        """Setter for a specific point."""
-        if 0 <= index < 24:
-            self.__points__[index] = checkers
-
-    def add_to_bar(self, player: Player, checker: Checkers):
-        """Add a checker to the bar for a player."""
-        self.__bar__[player].append(checker)
-
-    def set_off_board(self, player: Player, count: int):
-        """Setter for off_board count for a player."""
-        self.__off_board__[player] = count
-
-    def set_ai(self, ai: AIPlayer):
-        """Setter for AI."""
-        self.__ai__ = ai
-        self.__ai__.__board__ = self
-        self.__ai__.__player__ = self.__player2__
+    def get_possible_moves_for_checker(self, from_point, player, dice):
+        moves = []
+        direction = -1 if player.get_color() == 'white' else 1
+        for die in set(dice):
+            if self.is_valid_move(from_point, die, player):
+                if from_point == 'bar':
+                    to_point = 24 + die * direction if player.get_color() == 'white' else -1 + die * direction
+                else:
+                    to_point = from_point + (die * direction)
+                
+                is_bear_off = (direction == -1 and to_point < 0) or (direction == 1 and to_point > 23)
+                if is_bear_off: 
+                    moves.append("off")
+                elif 0 <= to_point < 24: 
+                    moves.append(to_point)
+        return moves
+        
+    def has_any_valid_moves(self, player, dice):
+        if self.__bar__.get(player):
+            for die in dice:
+                if self.is_valid_move('bar', die, player): return True
+            return False
+        for i in range(24):
+            if self.__points__[i] and self.__points__[i][0].get_owner() == player:
+                for die in dice:
+                    if self.is_valid_move(i, die, player): return True
+        return False
+        
+    def find_die_for_bear_off(self, from_point, player, dice):
+        """
+        Finds the exact die required for a bear-off move and checks if it's available.
+        Returns the die value if valid, otherwise None.
+        """
+        required_die = (from_point + 1) if player.get_color() == 'white' else (24 - from_point)
+        
+        if required_die in dice:
+            if self.is_valid_bear_off_move(from_point, required_die, player):
+                return required_die
+        return None

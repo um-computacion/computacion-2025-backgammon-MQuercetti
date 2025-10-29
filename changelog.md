@@ -1,46 +1,25 @@
-# Changelog
+# Changelog del Proyecto Backgammon
 
-All notable changes to this project will be documented in this file.
+## Versión 2.0 (Octubre 2025) - Refactorización y Estabilización
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Esta versión representa una reconstrucción fundamental del juego para solucionar errores sistémicos, mejorar la estabilidad y añadir funcionalidades clave que estaban pendientes.
 
-## [Unreleased]
+### ✨ Mejoras y Nuevas Funcionalidades
 
-### Agregado
+- **Refactorización Integral del Core:** Se reescribió por completo la lógica del juego (`core/`) para seguir principios de diseño de software modernos, separando responsabilidades en clases claras y cohesivas (`Game`, `Board`, `Player`, `AIPlayer`, `Dice`).
+- **Interfaz de Usuario Reconstruida:** Se reescribió `pygame_ui/main.py` desde cero para integrarse con el nuevo `core`, adoptando una máquina de estados robusta para gestionar el flujo del juego (menú, partida, turno de la IA, fin de juego).
+- **IA Completamente Funcional:** La inteligencia artificial ahora juega de forma autónoma y correcta. Su turno es automático, mostrando los dados antes de mover para una mejor experiencia de usuario.
+- **Pantalla de Fin de Juego:** Se ha añadido una pantalla de "Game Over" que anuncia al ganador y ofrece opciones para "Jugar de Nuevo" o "Volver al Menú Principal".
+- **Lógica de "Bear-Off" Corregida:** Se ha implementado la regla de que solo se pueden retirar fichas con un tiro de dado exacto, eliminando el comportamiento de "overshoot".
+- **Mensajes en Pantalla:** El juego ahora muestra un mensaje claro cuando un jugador no tiene movimientos posibles.
+- **Mejoras Visuales:**
+    - Los dados dobles ahora se muestran en una cuadrícula de 2x2.
+    - Las pilas de más de 5 fichas en un punto ahora muestran un contador numérico para mayor claridad.
 
-- Inicialización del proyecto con estructura de carpetas y archivos básicos.
-- Clase `Player` con atributos `name` y `color`.
-- Clase `Checkers` con atributo `owner`.
-- Clase `Board` con inicialización de puntos, bar, off_board, y métodos básicos.
-- Clase `AIPlayer` con lógica básica para movimientos válidos y evaluación.
-- CLI básico con menú para Humano vs IA y Humano vs Humano.
-- Tests iniciales para `Board`, `Player`, `Checkers`.
-- Lógica de movimientos normales, hits, bar priority.
-- Lógica de bear-off para retirar fichas.
-- Soporte para dados con `roll_dice`.
-- IA que elige movimientos básicos.
-- Opción para posiciones iniciales randomizadas o estándar en `Board.__init__` con parámetro `random_positions`.
-- Opción "retirar" en CLI para humanos, permitiendo elegir ficha para bear-off desde las últimas 6 casillas.
-- Feedback en CLI para movimientos de IA y confirmación de fichas retiradas.
-- Lógica exacta para bear-off: el dado debe ser exactamente la distancia requerida para retirar.
-- Soporte completo para bear-off en IA y humanos, con verificación de victoria al retirar 15 fichas.
+### 🐛 Corrección de Errores
 
-### Cambiado
-
-- `roll_dice` en `Board` para devolver exactamente 2 dados en lugar de importar de `core.dice`.
-- `_get_valid_moves` en `AIPlayer` para incluir movimientos de bear-off.
-- `_play_human_turn` en CLI para manejar opción "retirar" y calcular bear-off automáticamente.
-
-### Corregido
-
-- Tests para usar `random_positions=False` en `Board` para posiciones estándar.
-- `is_valid_move` para bear-off exacto (`die == required_die`) en lugar de `die >= required_die`.
-- `test_roll_dice` para esperar 2 dados.
-- `test_is_valid_move_bar_priority_white` para usar dado válido para bar.
-- Importaciones en `test_board.py` agregando `import unittest`.
-- Lógica de `__deepcopy__` en `DummyBoard` para tests de IA.
-
-### Removido
-
-- Dependencia de `core.dice` en `board.py`, usando `random` directamente.
+- **Solucionado el Crash de Arranque (Importación Circular):** Se ha resuelto el `ImportError` crítico causado por dependencias circulares entre los módulos del `core`.
+- **Solucionados los Botones No Funcionales:** Se ha corregido el bucle de eventos de Pygame que impedía que los botones del menú principal y otras pantallas respondieran, haciendo el juego completamente navegable.
+- **Solucionados Múltiples Crashes en Tiempo de Ejecución:** La nueva arquitectura elimina `TypeError` y `NameError` que ocurrían esporádicamente.
+- **Corregida la Lógica de Movimiento:** Las fichas ahora se mueven en la dirección correcta según las reglas del Backgammon, y el consumo de dados es el adecuado.
+- **Estabilidad General:** El juego ya no se bloquea y ofrece una experiencia de principio a fin sin interrupciones.

@@ -1,48 +1,39 @@
 import random
 
-
 class Dice:
     """
     A class used to represent dice in the Backgammon game.
 
     Attributes
     ----------
-    __values__ : list of int
+    values : list of int
         The current values of the dice.
-
-    Methods
-    -------
-    roll()
-        Rolls the dice.
-    get_values()
-        Returns the current values.
     """
 
     def __init__(self):
-        """
-        Constructs all the necessary attributes for the dice object.
-        """
-        self.__values__ = [1, 1]  # Default
+        """Constructs all the necessary attributes for the dice object."""
+        self.values = []
 
     def roll(self):
-        """
-        Rolls the dice.
+        """Rolls two dice."""
+        self.values = [random.randint(1, 6), random.randint(1, 6)]
+        return self.values
 
-        Returns
-        -------
-        list of int
-            The new values.
-        """
-        self.__values__ = [random.randint(1, 6), random.randint(1, 6)]
-        return self.__values__
+    def roll_one(self):
+        """Rolls a single die."""
+        return random.randint(1, 6)
 
     def get_values(self):
-        """
-        Returns the current values of the dice.
+        """Returns the current values of the dice."""
+        return self.values
 
-        Returns
-        -------
-        list of int
-            The values.
-        """
-        return self.__values__
+    def set_values(self, values):
+        """Sets the dice to specific values."""
+        self.values = values
+
+    def remove_value(self, value):
+        """Removes a die value after it has been used for a move."""
+        if value in self.values:
+            self.values.remove(value)
+        else:
+            raise ValueError(f"Die value {value} not available in {self.values}")
