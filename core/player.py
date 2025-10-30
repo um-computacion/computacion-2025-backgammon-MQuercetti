@@ -21,6 +21,13 @@ class Player:
     def __init__(self, name: str, color: str):
         """
         Constructs all the necessary attributes for the player object.
+
+        Parameters
+        ----------
+        name : str
+            The name of the player.
+        color : str
+            The color of the player's checkers ('white' or 'black').
         """
         self.__name__ = name
         self.__color__ = color
