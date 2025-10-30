@@ -109,3 +109,34 @@ El `core` tiene dependencias complejas. Para evitar `ImportError` por importacio
 
 - `from __future__ import annotations` en la primera línea del archivo.
 - Escribir las anotaciones de tipo como cadenas de texto (ej. `player: 'Player'`) para posponer su evaluación.
+
+# Archivo de Prompts para Desarrollo
+
+Este archivo documenta los prompts utilizados para generar o refactorizar código de la aplicación.
+
+---
+
+## Prompt 1: Refactorizar `core/game.py` para cumplir convenciones
+
+- **Modelo / Herramienta usada**: Jules (Agente de Software Autónomo)
+- **Instrucciones del sistema**: "Eres Jules, un ingeniero de software..." (Instrucciones estándar del sistema)
+- **Texto exacto del prompt**: "El archivo `core/game.py` tiene un problema importante con las convenciones de nombrado: los atributos no siguen la regla `__atributo__`. Además, los docstrings, aunque presentes, podrían ser más explícitos sobre lo que hace cada función. Voy a corregir ambos problemas: 1. Renombraré todos los atributos para que sigan la convención `__atributo__`. 2. Mejoraré los docstrings de los métodos públicos."
+- **Respuesta/resultado completo devuelto por la IA**: 
+  ```python
+  # (Se incluye aquí el bloque de código completo generado por la IA,
+  # que corresponde a la refactorización de la clase Game con los
+  # nuevos nombres de atributos y docstrings mejorados)
+  class Game:
+      def __init__(self, players: list['Player'], random_positions=False):
+          """
+          Initializes the Game object.
+          ...
+          """
+          self.__players__ = players
+          self.__board__ = Board(players[0], players[1], random_positions=random_positions)
+          # ... resto de los atributos y métodos ...
+  ```
+- **Uso de la salida**: Usada con modificaciones. Después de aplicar el cambio, los tests fallaron debido al cambio de nombres de atributos, lo que requirió correcciones adicionales en los archivos de test.
+- **Referencia a los archivos finales**: `core/game.py`, `tests/test_game_logic.py`, `tests/test_player.py`.
+
+---

@@ -120,3 +120,31 @@ Cualquier cambio que afecte a la interfaz de usuario en `pygame_ui/main.py` debe
 - **Changelog:** Cualquier cambio significativo (nuevas funcionalidades, corrección de errores importantes) debe ser añadido a `changelog.md`.
 - **Código Autodocumentado:** Utiliza nombres de variables y funciones claros. Añade comentarios solo cuando la lógica sea compleja y no sea evidente por sí misma.
 - **Docstrings:** Todas las clases y métodos públicos deben tener *docstrings* que expliquen su propósito, parámetros y lo que retornan.
+
+# Archivo de Prompts para Testing
+
+Este archivo documenta los prompts utilizados para generar o corregir tests unitarios.
+
+---
+
+## Prompt 1: Crear tests para `core/board.py`
+
+- **Modelo / Herramienta usada**: Jules (Agente de Software Autónomo)
+- **Instrucciones del sistema**: "Eres Jules, un ingeniero de software..." (Instrucciones estándar del sistema)
+- **Texto exacto del prompt**: "De acuerdo, comenzaré a añadir tests para `core/board.py`. Creararé un nuevo archivo de tests llamado `tests/test_board_extended.py` para mantener estos nuevos tests organizados y separados de los ya existentes. En este nuevo archivo, añadiré tests para cubrir las siguientes funcionalidades: 1. Creación de un tablero con posiciones aleatorias. 2. El `IndexError` al intentar acceder a un punto inválido. 3. Intentar mover desde la barra cuando está vacía. 4. Varias condiciones de fallo en `is_valid_bear_off_move`."
+- **Respuesta/resultado completo devuelto por la IA**: 
+  ```python
+  # (Se incluye aquí el bloque de código completo generado por la IA,
+  # que corresponde al contenido del archivo tests/test_board_extended.py)
+  import unittest
+  from core.board import Board
+  from core.player import Player
+  from core.checkers import Checkers
+
+  class TestBoardExtended(unittest.TestCase):
+      # ... contenido de la clase de test ...
+  ```
+- **Uso de la salida**: Usada sin cambios. El código generado se añadió directamente al repositorio.
+- **Referencia a los archivos finales**: `tests/test_board_extended.py`.
+
+---

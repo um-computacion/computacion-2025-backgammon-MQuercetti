@@ -62,6 +62,7 @@ class BackgammonUI:
         self.dice_rolled = False
         self.message = None
         self.message_timer = 0
+        self.ai_turn_timer = None
 
     def draw_board(self):
         pygame.draw.rect(self.screen, BOARD_COLOR, (BOARD_LEFT, BOARD_TOP, BOARD_WIDTH, BOARD_HEIGHT))
@@ -419,7 +420,7 @@ class BackgammonUI:
                 else:
                     p1 = Player(self.player_names[0], "white")
                     p2 = AIPlayer(self.player_names[1], "black")
-                self.game = Game([p1, p2])
+                self.game = Game([p1, p2], random_positions=True)
                 self.game_state = "initial_roll"
             elif self.exit_names_rect.collidepoint(event.pos):
                 self.game_state = "menu"
@@ -515,7 +516,6 @@ class BackgammonUI:
             
     def run(self):
         running = True
-        ai_turn_timer = None
         
         while running:
             for event in pygame.event.get():
@@ -554,27 +554,33 @@ class BackgammonUI:
             
             # --- Automatic AI Turn Management ---
             is_ai_turn = isinstance(current_player, AIPlayer) and self.game_state == "playing"
-            
-            if is_ai_turn and not self.dice_rolled:
-                # Start of AI's turn. Roll dice and set a timer.
-                self.game.roll_dice()
-                self.dice_rolled = True
-                ai_turn_timer = pygame.time.get_ticks()
-                
-                # Check for possible moves right after rolling
-                if not self.game.has_possible_moves(current_player):
-                    self.message = "No Tienes Movimientos Posibles"
-                    self.message_timer = pygame.time.get_ticks()
-                else:
-                    self.game_state = "ai_moving" # AI has moves, proceed to move phase
+
+            # --- Automatic AI Turn Management ---
+            # This logic block handles the entire AI turn sequence, including the special first turn.
+            if is_ai_turn:
+                if not self.dice_rolled:
+                    # Normal turn start: Roll dice and set timer
+                    self.game.roll_dice()
+                    self.dice_rolled = True
+                    self.ai_turn_timer = pygame.time.get_ticks()
+                    if not self.game.has_possible_moves(current_player):
+                        self.message = "No Tienes Movimientos Posibles"
+                        self.message_timer = pygame.time.get_ticks()
+                    else:
+                        self.game_state = "ai_moving"
+                elif self.dice_rolled and self.game_state != "ai_moving":
+                    # Special case: First turn where dice are already rolled.
+                    # Start the timer and switch to moving state.
+                    self.ai_turn_timer = pygame.time.get_ticks()
+                    self.game_state = "ai_moving"
 
             if self.game_state == "ai_moving":
-                if ai_turn_timer is not None and pygame.time.get_ticks() - ai_turn_timer > 1000:
-                    self.game.play_ai_turn() # Execute all AI moves
-                    self.game.switch_player() # Switch back to human
+                if self.ai_turn_timer is not None and pygame.time.get_ticks() - self.ai_turn_timer > 1000:
+                    self.game.play_ai_turn()
+                    self.game.switch_player()
                     self.dice_rolled = False
                     self.game_state = "playing"
-                    ai_turn_timer = None # Reset timer
+                    self.ai_turn_timer = None
 
             self.screen.fill(BACKGROUND_COLOR)
             if self.game_state in ["playing", "ai_rolling", "ai_moving"]:

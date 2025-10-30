@@ -14,14 +14,31 @@ class Board:
     """
 
     def __init__(self, player1: 'Player', player2: 'Player', random_positions: bool = False):
-        self.__player1__ = player1 # White
-        self.__player2__ = player2 # Black
+        """
+        Initializes the Board object.
+
+        Args:
+            player1 (Player): The first player (white).
+            player2 (Player): The second player (black).
+            random_positions (bool, optional): Whether to set up the board with random checker positions. Defaults to False.
+        """
+        self.__player1__ = player1  # White
+        self.__player2__ = player2  # Black
         self.__winner__ = None
         self.__points__ = self._create_points(random_positions)
         self.__bar__: Dict['Player', List[Checkers]] = {player1: [], player2: []}
         self.__off_board__: Dict['Player', int] = {player1: 0, player2: 0}
 
     def _create_points(self, random_positions: bool = False):
+        """
+        Creates the initial layout of the checkers on the board.
+
+        Args:
+            random_positions (bool, optional): If True, places checkers randomly. Defaults to False.
+
+        Returns:
+            list: A list of 24 lists, where each inner list represents a point on the board.
+        """
         points = [[] for _ in range(24)]
         if not random_positions:
             # Player 1 (White) moves from 23 down to 0
@@ -49,17 +66,54 @@ class Board:
         return points
 
     def get_point(self, index: int):
+        """
+        Returns the checkers at a specific point on the board.
+
+        Args:
+            index (int): The point index (0-23).
+
+        Returns:
+            list: A list of Checkers at the specified point.
+        
+        Raises:
+            IndexError: If the index is out of bounds.
+        """
         if 0 <= index < 24: return self.__points__[index]
         raise IndexError("Invalid point index")
 
-    def get_points(self): return self.__points__
-    def get_bar(self): return self.__bar__
-    def get_off_board_count(self, player: 'Player'): return self.__off_board__.get(player, 0)
-    def _set_off_board_count(self, player: 'Player', count: int): self.__off_board__[player] = count
-    def get_winner(self): return self.__winner__
+    def get_points(self):
+        """Returns the entire list of points on the board."""
+        return self.__points__
+
+    def get_bar(self):
+        """Returns the dictionary representing the bar."""
+        return self.__bar__
+
+    def get_off_board_count(self, player: 'Player'):
+        """Returns the number of checkers a player has borne off."""
+        return self.__off_board__.get(player, 0)
+
+    def _set_off_board_count(self, player: 'Player', count: int):
+        """Sets the number of checkers a player has borne off (for testing)."""
+        self.__off_board__[player] = count
+
+    def get_winner(self):
+        """Returns the winner of the game, if any."""
+        return self.__winner__
 
 
     def is_valid_move(self, from_point, die: int, player: 'Player'):
+        """
+        Checks if a move is valid according to the rules of Backgammon.
+
+        Args:
+            from_point (str or int): The starting point ('bar' or 0-23).
+            die (int): The value of the die to use for the move.
+            player (Player): The player making the move.
+
+        Returns:
+            bool: True if the move is valid, False otherwise.
+        """
         if die <= 0: return False
 
         direction = -1 if player.get_color() == 'white' else 1
@@ -83,6 +137,17 @@ class Board:
         return not (destination and destination[0].get_owner() != player and len(destination) > 1)
 
     def move_piece(self, from_point, die: int, player: Player):
+        """
+        Moves a checker on the board.
+
+        Args:
+            from_point (str or int): The starting point ('bar' or 0-23).
+            die (int): The die value used for the move.
+            player (Player): The player making the move.
+
+        Raises:
+            ValueError: If the move is invalid.
+        """
         if not self.is_valid_move(from_point, die, player):
             raise ValueError("Invalid move")
 
@@ -109,6 +174,15 @@ class Board:
         self.__points__[to_point].append(checker)
 
     def can_player_bear_off(self, player: Player):
+        """
+        Checks if a player is in a position to start bearing off checkers.
+
+        Args:
+            player (Player): The player to check.
+
+        Returns:
+            bool: True if the player can bear off, False otherwise.
+        """
         if self.__bar__.get(player):
             return False
 
@@ -126,6 +200,17 @@ class Board:
         return total_checkers == 15
 
     def is_valid_bear_off_move(self, from_point, die, player):
+        """
+        Checks if a bear-off move is valid.
+
+        Args:
+            from_point (int): The point from which to bear off.
+            die (int): The value of the die used.
+            player (Player): The player making the move.
+
+        Returns:
+            bool: True if the bear-off move is valid, False otherwise.
+        """
         if not self.can_player_bear_off(player):
             return False
 
@@ -140,6 +225,17 @@ class Board:
             return (24 - from_point) == die
 
     def get_possible_moves_for_checker(self, from_point, player, dice):
+        """
+        Gets all possible moves for a single checker.
+
+        Args:
+            from_point (str or int): The starting point of the checker.
+            player (Player): The player who owns the checker.
+            dice (list): A list of available dice values.
+
+        Returns:
+            list: A list of possible destination points (int or 'off').
+        """
         moves = []
         direction = -1 if player.get_color() == 'white' else 1
         for die in set(dice):
@@ -157,6 +253,16 @@ class Board:
         return moves
         
     def has_any_valid_moves(self, player, dice):
+        """
+        Checks if the player has any valid moves with the available dice.
+
+        Args:
+            player (Player): The player to check.
+            dice (list): A list of available dice values.
+
+        Returns:
+            bool: True if there is at least one valid move, False otherwise.
+        """
         if self.__bar__.get(player):
             for die in dice:
                 if self.is_valid_move('bar', die, player): return True

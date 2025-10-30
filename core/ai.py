@@ -7,20 +7,26 @@ if TYPE_CHECKING:
 
 class AIPlayer(Player):
     """
-    Represents an AI player that can choose its own moves.
+    Represents an AI player that can choose its own moves. Inherits from Player.
     """
 
     def choose_moves(self, board: 'Board', dice: List[int]) -> List[tuple]:
         """
-        Chooses a sequence of moves for the AI.
-        
-        This implementation finds the first valid sequence of moves by iterating
-        through dice and checker positions. It returns moves as (from_point, to_point)
-        tuples, as expected by the game engine.
+        Chooses a sequence of moves for the AI based on the current board state and dice.
+
+        This implementation uses a simple greedy algorithm that prioritizes higher dice values
+        and bearing off. It simulates moves on a temporary board to find a valid sequence.
+
+        Args:
+            board (Board): The current state of the game board.
+            dice (List[int]): The dice values available for the turn.
+
+        Returns:
+            List[tuple]: A list of move tuples, e.g., [('bar', 22), (5, 3)].
         """
         best_moves = []
         temp_board = copy.deepcopy(board)
-        temp_dice = sorted(list(set(dice)), reverse=True) # Use unique dice, higher first
+        temp_dice = sorted(list(set(dice)), reverse=True)  # Use unique dice, higher first
         
         if len(dice) > len(temp_dice): # Handle doubles
             temp_dice = list(dice)
