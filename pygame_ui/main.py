@@ -420,7 +420,7 @@ class BackgammonUI:
                 else:
                     p1 = Player(self.player_names[0], "white")
                     p2 = AIPlayer(self.player_names[1], "black")
-                self.game = Game([p1, p2], random_positions=True)
+                self.game = Game([p1, p2])
                 self.game_state = "initial_roll"
             elif self.exit_names_rect.collidepoint(event.pos):
                 self.game_state = "menu"
