@@ -1,0 +1,220 @@
+# Diagrama de Clases - Core Module
+
+```mermaid
+classDiagram
+    class Game {
+        -Board board
+        -Dice dice
+        -Color currentPlayer
+        -GameState state
+        -List~Move~ moveHistory
+        -int doublingCube
+        -Color doublingCubeOwner
+        +Game()
+        +start() void
+        +rollDice() Tuple~int, int~
+        +makeMove(Move move) bool
+        +getValidMoves() List~Move~
+        +switchPlayer() void
+        +isGameOver() bool
+        +getWinner() Color
+        +getBoard() Board
+        +getCurrentPlayer() Color
+        +getState() GameState
+        +offerDouble() bool
+        +acceptDouble() bool
+        +resign() void
+        +getScore() int
+    }
+
+    class Board {
+        -List~Point~ points
+        -Bar bar
+        -BearOff bearOff
+        +Board()
+        +initialize() void
+        +getPoint(int index) Point
+        +getAllPoints() List~Point~
+        +getBar() Bar
+        +getBearOff() BearOff
+        +moveChecker(int from, int to, Color color) bool
+        +canMove(int from, int to, Color color) bool
+        +isValidMove(Move move) bool
+        +clone() Board
+        +toString() String
+    }
+
+    class Point {
+        -int position
+        -Stack~Checker~ checkers
+        +Point(int position)
+        +addChecker(Checker checker) void
+        +removeChecker() Checker
+        +getTopChecker() Checker
+        +getCheckerCount() int
+        +isEmpty() bool
+        +isOccupiedBy(Color color) bool
+        +canPlaceChecker(Color color) bool
+        +getColor() Color
+        +getPosition() int
+        +clone() Point
+    }
+
+    class Checker {
+        -Color color
+        -int position
+        +Checker(Color color)
+        +getColor() Color
+        +getPosition() int
+        +setPosition(int position) void
+        +equals(Object obj) bool
+        +hashCode() int
+    }
+
+    class Bar {
+        -Map~Color, List~Checker~~ checkers
+        +Bar()
+        +addChecker(Checker checker) void
+        +removeChecker(Color color) Checker
+        +hasCheckers(Color color) bool
+        +getCount(Color color) int
+        +isEmpty() bool
+        +clone() Bar
+    }
+
+    class BearOff {
+        -Map~Color, List~Checker~~ checkers
+        +BearOff()
+        +addChecker(Checker checker) void
+        +getCount(Color color) int
+        +hasWon(Color color) bool
+        +clone() BearOff
+    }
+
+    class Dice {
+        -List~int~ values
+        -List~int~ availableMoves
+        -Random random
+        +Dice()
+        +roll() Tuple~int, int~
+        +getValues() List~int~
+        +getAvailableMoves() List~int~
+        +useValue(int value) bool
+        +hasMovesLeft() bool
+        +isDouble() bool
+        +reset() void
+    }
+
+    class Move {
+        -int from
+        -int to
+        -Color color
+        -int diceValue
+        -bool isHit
+        -bool isBearOff
+        +Move(int from, int to, Color color, int diceValue)
+        +getFrom() int
+        +getTo() int
+        +getColor() Color
+        +getDiceValue() int
+        +isHit() bool
+        +setHit(bool hit) void
+        +isBearOff() bool
+        +setBearOff(bool bearOff) void
+        +isValid() bool
+        +equals(Object obj) bool
+        +toString() String
+    }
+
+    class Color {
+        <<enumeration>>
+        WHITE
+        BLACK
+        +opposite() Color
+        +getHomeStart() int
+        +getHomeEnd() int
+        +getDirection() int
+    }
+
+    class GameState {
+        <<enumeration>>
+        NOT_STARTED
+        ROLLING_DICE
+        MOVING_CHECKERS
+        WAITING_DOUBLE_RESPONSE
+        GAME_OVER
+    }
+
+    class MoveValidator {
+        +MoveValidator()
+        +isValidMove(Board board, Move move, Dice dice) bool
+        +canBearOff(Board board, Color color) bool
+        +canMoveFromBar(Board board, Color color, int diceValue) bool
+        +getValidMoves(Board board, Color color, Dice dice) List~Move~
+        -hasCheckersInHome(Board board, Color color) bool
+        -hasCheckersOnBar(Board board, Color color) bool
+        -isBlocked(Board board, int position, Color color) bool
+    }
+
+    class GameEngine {
+        -Game game
+        -MoveValidator validator
+        +GameEngine(Game game)
+        +processMove(Move move) bool
+        +processTurn() void
+        +calculateValidMoves() List~Move~
+        +executeMove(Move move) bool
+        +checkWinCondition() bool
+        +calculateScore() int
+    }
+
+    class ScoreCalculator {
+        +ScoreCalculator()
+        +calculateWinScore(Board board, Color winner, int doublingCube) int
+        +isBackgammon(Board board, Color loser) bool
+        +isGammon(Board board, Color loser) bool
+        +isSingleWin(Board board, Color loser) bool
+    }
+
+    %% Relaciones
+    Game "1" *-- "1" Board : contiene
+    Game "1" *-- "1" Dice : contiene
+    Game "1" -- "1" Color : currentPlayer
+    Game "1" -- "1" GameState : state
+    Game "1" *-- "*" Move : moveHistory
+    
+    Board "1" *-- "24" Point : contiene
+    Board "1" *-- "1" Bar : contiene
+    Board "1" *-- "1" BearOff : contiene
+    
+    Point "1" *-- "*" Checker : contiene
+    Bar "1" *-- "*" Checker : contiene
+    BearOff "1" *-- "*" Checker : contiene
+    
+    Checker "1" -- "1" Color : tiene
+    Move "1" -- "1" Color : pertenece
+    
+    MoveValidator ..> Board : valida
+    MoveValidator ..> Move : valida
+    MoveValidator ..> Dice : usa
+    
+    GameEngine "1" -- "1" Game : gestiona
+    GameEngine "1" -- "1" MoveValidator : usa
+    GameEngine ..> Move : ejecuta
+    
+    ScoreCalculator ..> Board : calcula
+    ScoreCalculator ..> Color : evalúa
+
+
+Este diagrama muestra:
+- **Clases principales**: Game, Board, Point, Checker
+- **Clases auxiliares**: Bar, BearOff, Dice, Move
+- **Enumeraciones**: Color, GameState
+- **Validadores y motores**: MoveValidator, GameEngine, ScoreCalculator
+- **Relaciones**: composición, agregación, dependencia y uso
+Este diagrama muestra:
+- **Clases principales**: Game, Board, Point, Checker
+- **Clases auxiliares**: Bar, BearOff, Dice, Move
+- **Enumeraciones**: Color, GameState
+- **Validadores y motores**: MoveValidator, GameEngine, ScoreCalculator
+- **Relaciones**: composición, agregación, dependencia y uso
